@@ -855,25 +855,47 @@ body.light-view .class-box.active{
 body.auth-locked .topbar,
 body.auth-locked .body,
 body.auth-locked .rotate-banner{display:none!important;}
-.auth-gate{display:none;min-height:100vh;padding:24px 16px;align-items:center;justify-content:center;background:radial-gradient(circle at top,#08304d 0%,#04101e 48%,#020814 100%);}
+.auth-gate{
+  display:none;min-height:100vh;padding:24px 16px;align-items:center;justify-content:center;position:relative;overflow:hidden;
+  background:radial-gradient(circle at 50% 18%,rgba(37,215,243,.18),transparent 28%),linear-gradient(145deg,#031326 0%,#04101e 48%,#020814 100%);
+}
+.auth-gate::before{
+  content:"";position:absolute;inset:0;opacity:.18;pointer-events:none;
+  background:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);
+  background-size:42px 42px;mask-image:radial-gradient(circle at center,#000 0%,transparent 72%);
+}
+.auth-gate::after{
+  content:"";position:absolute;width:360px;height:360px;border:1px solid rgba(37,215,243,.18);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 72px rgba(37,215,243,.025),0 0 90px rgba(37,215,243,.12);pointer-events:none;
+}
 body.auth-locked .auth-gate{display:flex;}
-.auth-card{width:min(420px,100%);border:1px solid rgba(37,215,243,.28);border-radius:14px;background:linear-gradient(145deg,rgba(8,22,42,.96),rgba(2,8,18,.98));box-shadow:0 18px 60px rgba(0,0,0,.42);padding:22px;}
-.auth-brand{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
-.auth-pin{width:38px;height:38px;border-radius:12px;background:#ffd700;display:grid;place-items:center;color:#04101e;font-weight:950;font-size:18px;}
-.auth-title{font-size:24px;font-weight:950;color:#ffd700;line-height:1;}
-.auth-sub{font-size:12px;color:#9db7d2;font-weight:800;margin-top:4px;}
-.auth-form{display:grid;gap:10px;}
-.auth-form input{height:46px;border:1px solid rgba(255,255,255,.16);border-radius:9px;background:#020814;color:#f0f4ff;padding:0 12px;font-size:15px;font-weight:800;min-width:0;}
-.auth-form button{height:48px;border:0;border-radius:9px;background:linear-gradient(135deg,#25d7f3,#0891b2);color:#020814;font-weight:950;font-size:15px;cursor:pointer;}
+.auth-card{
+  position:relative;z-index:1;width:min(460px,100%);border:1px solid rgba(37,215,243,.34);border-radius:18px;
+  background:linear-gradient(145deg,rgba(8,22,42,.94),rgba(2,8,18,.98));box-shadow:0 22px 70px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);padding:26px;
+}
+.auth-card::before{content:"";position:absolute;left:18px;right:18px;top:0;height:1px;background:linear-gradient(90deg,transparent,#25d7f3,transparent);opacity:.65;}
+.auth-brand{display:grid;grid-template-columns:82px 1fr;align-items:center;gap:16px;margin-bottom:20px;}
+.auth-pin{position:relative;width:76px;height:76px;display:grid;place-items:center;}
+.auth-pin::before,.auth-pin::after{content:"";position:absolute;inset:5px;border:1px solid rgba(37,215,243,.42);border-radius:50%;animation:gpsPulse 2.4s ease-out infinite;}
+.auth-pin::after{animation-delay:1.2s;}
+.auth-pin svg{width:62px;height:62px;filter:drop-shadow(0 10px 18px rgba(255,215,0,.22));animation:gpsFloat 3.2s ease-in-out infinite;position:relative;z-index:1;}
+.auth-title{font-size:30px;font-weight:950;color:#ffd700;line-height:.95;letter-spacing:0;}
+.auth-kicker{font-size:10px;font-weight:950;letter-spacing:2px;color:#25d7f3;text-transform:uppercase;margin-bottom:5px;}
+.auth-sub{font-size:13px;color:#c8d8e8;font-weight:800;margin-top:7px;line-height:1.32;}
+.auth-form{display:grid;gap:11px;}
+.auth-form input{height:48px;border:1px solid rgba(143,168,192,.32);border-radius:10px;background:rgba(2,8,18,.92);color:#f0f4ff;padding:0 14px;font-size:15px;font-weight:800;min-width:0;outline:none;}
+.auth-form input:focus{border-color:#25d7f3;box-shadow:0 0 0 3px rgba(37,215,243,.16);}
+.auth-form button{height:50px;border:0;border-radius:10px;background:linear-gradient(135deg,#25d7f3,#0891b2);color:#020814;font-weight:950;font-size:16px;cursor:pointer;box-shadow:0 14px 30px rgba(8,145,178,.22);}
+.auth-form button:hover{filter:brightness(1.04);}
 .auth-form button:disabled{opacity:.65;cursor:wait;}
-.auth-status{min-height:18px;margin-top:10px;font-size:12px;font-weight:850;color:#9db7d2;line-height:1.35;}
+.auth-status{min-height:18px;margin-top:12px;font-size:12px;font-weight:850;color:#9db7d2;line-height:1.35;}
 .auth-status.ok{color:#22d47e;}.auth-status.bad{color:#f05252;}
 body.patio-role .gestor-name-field{display:none!important;}
 body.user-avaliador #btnGestor,
 body.user-avaliador .gestor-portal-only{display:none!important;}
 body.user-avaliador .role-toggle{justify-content:flex-end;}
-@media (max-width:520px){.auth-card{padding:18px}.auth-title{font-size:22px}}
-
+@keyframes gpsPulse{0%{transform:scale(.82);opacity:.72}70%{transform:scale(1.28);opacity:0}100%{transform:scale(1.28);opacity:0}}
+@keyframes gpsFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@media (max-width:520px){.auth-card{padding:20px}.auth-brand{grid-template-columns:64px 1fr;gap:12px}.auth-pin{width:60px;height:60px}.auth-pin svg{width:52px;height:52px}.auth-title{font-size:25px}}
 
 /* SALVAR ONLINE NA VISAO AVALIADOR */
 .avaliador-save-panel{display:none;margin-top:10px;border:1px solid rgba(37,215,243,.22);border-radius:10px;background:linear-gradient(135deg,rgba(37,215,243,.08),rgba(8,22,42,.08));padding:10px;}
@@ -909,10 +931,17 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
 <div class="auth-gate" id="authGate" aria-label="Acesso ao GPS">
   <div class="auth-card">
     <div class="auth-brand">
-      <div class="auth-pin">GPS</div>
+      <div class="auth-pin" aria-hidden="true">
+        <svg viewBox="0 0 64 64" role="img" aria-label="GPS">
+          <path d="M32 58s18-16.4 18-33A18 18 0 1 0 14 25c0 16.6 18 33 18 33Z" fill="#ffd700" stroke="#04101e" stroke-width="2.8"/>
+          <circle cx="32" cy="25" r="7.2" fill="#04101e"/>
+          <circle cx="32" cy="25" r="3.2" fill="#25d7f3"/>
+        </svg>
+      </div>
       <div>
+        <div class="auth-kicker">Portal San Marino</div>
         <div class="auth-title">Acesso GPS</div>
-        <div class="auth-sub">Entre para abrir o painel correto do seu perfil</div>
+        <div class="auth-sub">Entre para abrir automaticamente a visao do seu perfil.</div>
       </div>
     </div>
     <div class="auth-form">
