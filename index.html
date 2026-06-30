@@ -879,6 +879,7 @@ body.user-avaliador .role-toggle{justify-content:flex-end;}
 .avaliador-save-panel{display:none;margin-top:10px;border:1px solid rgba(37,215,243,.22);border-radius:10px;background:linear-gradient(135deg,rgba(37,215,243,.08),rgba(8,22,42,.08));padding:10px;}
 body.patio-role .avaliador-save-panel{display:block;}
 .avaliador-save-panel .portal-btn{width:100%;height:44px;}
+.avaliador-save-panel .avaliador-actions-row{grid-template-columns:1fr 1fr;margin-top:7px;}
 .avaliador-save-panel .portal-status{margin-top:7px;min-height:16px;font-size:10px;}
 
 </style>
@@ -1103,6 +1104,10 @@ body.patio-role .avaliador-save-panel{display:block;}
 
     <div class="avaliador-save-panel">
       <button type="button" class="portal-btn" id="portalSavePatioBtn">Salvar avalia&ccedil;&atilde;o online</button>
+      <div class="portal-row two avaliador-actions-row">
+        <button type="button" class="portal-btn subtle" id="portalNewPatioBtn">Nova avalia&ccedil;&atilde;o / limpar</button>
+        <button type="button" class="portal-btn subtle" id="portalLogoutPatioBtn">Sair</button>
+      </div>
       <div class="portal-status" id="portalStatusPatio" aria-live="polite"></div>
     </div></div>
   <!-- DIREITO -->
@@ -2430,6 +2435,8 @@ if($("dataAbertura") && !$("dataAbertura").value){
     byId("portalBuscaPlaca")?.addEventListener("keydown", ev => { if(ev.key === "Enter") listarAvaliacoes(); });
     byId("portalSaveBtn")?.addEventListener("click", salvarPortal);
     byId("portalSavePatioBtn")?.addEventListener("click", salvarPortal);
+    byId("portalNewPatioBtn")?.addEventListener("click", novaAvaliacao);
+    byId("portalLogoutPatioBtn")?.addEventListener("click", sairPortal);
     byId("portalCopyBtn")?.addEventListener("click", copiarLink);
     byId("portalListBtn")?.addEventListener("click", listarAvaliacoes);
     byId("portalNewBtn")?.addEventListener("click", novaAvaliacao);
