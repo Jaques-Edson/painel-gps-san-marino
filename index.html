@@ -825,6 +825,10 @@ body.light-view .class-box.active{
   box-shadow:0 0 0 0 rgba(255,176,0,.58),0 14px 34px rgba(255,77,0,.34)!important;
 }
 #portalSaveBtn.save-main:hover,#portalSavePatioBtn.save-main:hover{filter:brightness(1.08);}
+.field input[readonly]{opacity:.82;cursor:not-allowed;background:rgba(148,163,184,.12);}
+.recebimento-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:10px;align-items:end;}
+.recebimento-actions .portal-btn{min-height:42px;}
+@media(max-width:560px){.recebimento-actions{grid-template-columns:1fr;}}
 .portal-status{min-height:15px;font-size:10px;font-weight:800;color:#9db7d2;line-height:1.3;overflow-wrap:anywhere;}
 .portal-status.ok{color:#22d47e;}
 .portal-status.bad{color:#f05252;}
@@ -1019,7 +1023,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
         </div>
         <div class="field">
           <label>Placa</label>
-          <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;">
+          <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;" required pattern="[A-Za-z][A-Za-z0-9]*" maxlength="8">
         </div>
       </div>
     </div>
@@ -1048,7 +1052,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
     <div class="blk flex-blk">
       <div class="g2">
         <div class="field">
-          <label>Avaliação (R$)</label>
+          <label>Avalia&ccedil;&atilde;o Avaliador SM (R$)</label>
           <input id="avaliacao" type="text" inputmode="numeric" placeholder="Ex: 85.000">
         </div>
         <div class="field">
@@ -1118,17 +1122,27 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
       </div>
     </div>
 
-    <!-- GESTOR SM + KBB LOJA -->
+    <!-- AVALIACAO GESTOR + GESTOR SM -->
     <div class="blk ciano-blk gestor-only">
       <div class="g2">
+        <div class="field">
+          <label>Avalia&ccedil;&atilde;o Gestor SM (R$)</label>
+          <input id="avaliacaoGestor" type="text" inputmode="numeric" placeholder="Ex: 85.000">
+        </div>
         <div class="field">
           <label>Gestor SM / Showroom (R$)</label>
           <input id="smShowroom" type="text" inputmode="numeric" placeholder="Ex: 102.000">
         </div>
+      </div>
+    </div>
+
+    <div class="blk gestor-only">
+      <div class="recebimento-actions">
         <div class="field">
-          <label>KBB Loja (R$)</label>
-          <input id="kbbLoja" type="text" inputmode="numeric" placeholder="Ex: 97.000">
+          <label>Data de recebimento no estoque</label>
+          <input id="dataRecebimento" type="date">
         </div>
+        <button type="button" class="portal-btn" id="registrarRecebimentoBtn">Registrar recebimento hoje</button>
       </div>
     </div>
 
@@ -1148,6 +1162,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
 
     <!-- CAMPOS OCULTOS: KBB Repasse + parâmetros internos -->
     <input id="kbbRepasse" type="hidden" value="">
+    <input id="kbbLoja" type="hidden" value="">
     <input id="mediaShowroom" type="hidden" value="">
     <input id="mediaRepasse" type="hidden" value="">
     <input id="kitRafael" type="hidden" value="">
@@ -1335,11 +1350,12 @@ const PARAMS = Object.freeze({
   ═══════════════════════════════════════════════════════════
 
   INPUTS:
-    dataAbertura  → Data de Abertura (auto, dia em que o app é aberto; editável)
-    avaliacao     → Quanto o gestor quer pagar pelo carro (R$)
+    dataAbertura     ? Data de abertura da avalia??o (edit?vel)
+    dataRecebimento -> Data de entrada no estoque; quando preenchida, vira a data-base
+    avaliacao        ? Avalia??o registrada pelo avaliador SM (R$)
+    avaliacaoGestor  ? Avalia??o definida pelo gestor SM; prevalece nos c?lculos (R$)
     fipe          → Tabela FIPE (R$)
     aavB2C        → AutoAvaliar B2C (R$)
-    kbbLoja       → KBB Loja / Showroom (R$)
     smShowroom    → Expectativa de venda no Showroom (R$)
     kbbRepasse    → KBB Repasse (R$)
     aavRepasse    → AutoAvaliar Repasse (R$)
@@ -1435,13 +1451,14 @@ function fileSafe(s){
 
 function calc(){
   // ── INPUTS VISÍVEIS ───────────────────────────────────────
-  const F2        = parseDateInput($("dataAbertura").value);
-  const avaliacao = numVal("avaliacao");
+  const F2        = parseDateInput(($("dataRecebimento") && $("dataRecebimento").value) || $("dataAbertura").value);
+  const avaliacaoAvaliador = numVal("avaliacao");
+  const avaliacaoGestor = numVal("avaliacaoGestor");
+  const avaliacao = avaliacaoGestor > 0 ? avaliacaoGestor : avaliacaoAvaliador;
   const vlrSugAAV = numVal("vlrSugAAV");
   const reparo    = numVal("reparo");
   const fipe       = numVal("fipe");
   const aavB2C     = numVal("aavB2C");
-  const kbbLoja    = numVal("kbbLoja");
   const smShowroom = numVal("smShowroom");
   const aavRepasse = numVal("aavRepasse");
   const smRepasse  = numVal("smRepasse");
@@ -1463,7 +1480,6 @@ function calc(){
   // ── MÉDIAS DE MERCADO ────────────────────────────────────
   // Excel E4: Média Showroom = média de SM Showroom, AutoAvaliar B2C e FIPE.
   // Excel E5: Média Repasse = média de AAV B2B Repasse e San Marino Repasse.
-  // KBB Loja permanece como referência visual/operacional, sem alterar a média do Excel.
   const valsShow = [smShowroom, aavB2C, fipe].filter(v => v > 0);
   const valsRep  = [aavRepasse, smRepasse].filter(v => v > 0);
 
@@ -1875,7 +1891,7 @@ function dadosCompartilhamento(){
   const placa = (($("placa")?.value || "Sem placa").trim()).toUpperCase();
   const interesse = ($("modeloInteresse")?.value || "").trim();
   const modalidade = ($("modalidadeInteresse")?.value || "").trim();
-  const avaliacao = ($("avaliacao")?.value || "").trim();
+  const avaliacao = ($("avaliacaoGestor")?.value || $("avaliacao")?.value || "").trim();
   const abertura = $("dataAbertura")?.value ? fmtData(parseDateInput($("dataAbertura").value)) : fmtData(new Date());
   const nomeArquivo = `gps-${fileSafe(modelo || "veiculo")}-${fileSafe(placa || "sem-placa")}-${dh.file}.html`;
   const assunto = `Avaliação GPS - ${modelo} - ${placa}`;
@@ -1937,7 +1953,7 @@ function bindMoeda(id){
     calc();
   });
 }
-["avaliacao","reparo","vlrSugAAV","fipe","aavB2C","kbbLoja","smShowroom","aavRepasse","smRepasse","kitRafael"]
+["avaliacao","avaliacaoGestor","reparo","vlrSugAAV","fipe","aavB2C","smShowroom","aavRepasse","smRepasse","kitRafael"]
   .forEach(bindMoeda);
 
 // KM aceita apenas dígitos (sem separador de milhar para não confundir com R$)
@@ -1953,7 +1969,8 @@ function bindMoeda(id){
 (function bindPlaca(){
   const el = $("placa"); if(!el) return;
   el.addEventListener("input", function(){
-    this.value = this.value.toUpperCase();
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,"");
+    this.setCustomValidity(this.value && !/^[A-Z]/.test(this.value) ? "A placa deve comecar com uma letra." : "");
     calc();
   });
 })();
@@ -1989,6 +2006,19 @@ $("modelo").addEventListener("input",calc);
 if($("modeloInteresse")) $("modeloInteresse").addEventListener("input",calc);
 if($("modalidadeInteresse")) $("modalidadeInteresse").addEventListener("change",calc);
 $("dataAbertura").addEventListener("change",calc);
+if($("dataRecebimento")) $("dataRecebimento").addEventListener("change",calc);
+if($("registrarRecebimentoBtn")) $("registrarRecebimentoBtn").addEventListener("click", function(){
+  const campo = $("dataRecebimento");
+  if(!campo) return;
+  if(campo.value){
+    if(window.portalAviso) window.portalAviso("Recebimento ja registrado. A data pode ser editada no campo.", "ok");
+    return;
+  }
+  campo.value = isoLocalDate(new Date());
+  calc();
+  campo.dispatchEvent(new Event("change", { bubbles:true }));
+  if(window.portalAviso) window.portalAviso("Recebimento no estoque registrado em " + fmtData(parseDateInput(campo.value)) + ".", "ok");
+});
 $("dlBtn").addEventListener("click",download);
 if($("htmlBtn")) $("htmlBtn").addEventListener("click",exportHtmlSalvo);
 if($("shareHtmlBtn")) $("shareHtmlBtn").addEventListener("click",compartilharHtmlSalvo);
@@ -2073,8 +2103,8 @@ if($("dataAbertura") && !$("dataAbertura").value){
   const SESSION_KEY = "gps-supabase-session";
   const AVALIACAO_KEY = "gps-avaliacao-atual";
   const CAMPOS_PORTAL = [
-    "avaliadorNome","gestorNome","modelo","placa","modeloInteresse","modalidadeInteresse","avaliacao","reparo","vlrSugAAV","km",
-    "aavRepasse","aavB2C","fipe","smShowroom","kbbLoja","smRepasse","dataAbertura",
+    "avaliadorNome","gestorNome","modelo","placa","modeloInteresse","modalidadeInteresse","avaliacao","avaliacaoGestor","reparo","vlrSugAAV","km",
+    "aavRepasse","aavB2C","fipe","smShowroom","smRepasse","dataAbertura","dataRecebimento",
     "kbbRepasse","mediaShowroom","mediaRepasse","kitRafael","taxaJuros"
   ];
   let portalSession = null;
@@ -2256,6 +2286,8 @@ if($("dataAbertura") && !$("dataAbertura").value){
       if(typeof window.aplicarPapelOperacional === "function") window.aplicarPapelOperacional("gestor");
       if(btn) btn.title = "";
     }
+    const avaliacaoAvaliador = byId("avaliacao");
+    if(avaliacaoAvaliador) avaliacaoAvaliador.readOnly = papel === "gestor";
   }
   async function carregarPerfil(){
     if(!portalSession || !portalSession.user) return;
@@ -2354,9 +2386,9 @@ if($("dataAbertura") && !$("dataAbertura").value){
     const campos = [
       ["codigo","Codigo"],["placa","Placa"],["modelo","Veiculo"],["modeloInteresse","Modelo interesse"],
       ["modalidadeInteresse","Modalidade"],["perfil","Perfil"],["classificacao","Classificacao"],
-      ["avaliacao","Avaliacao"],["reparo","Reparo"],["vlrSugAAV","Valor sugerido AAV"],["km","KM"],
+      ["avaliacao","Avaliacao Avaliador SM"],["avaliacaoGestor","Avaliacao Gestor SM"],["reparo","Reparo"],["vlrSugAAV","Valor sugerido AAV"],["km","KM"],
       ["aavRepasse","AAV repasse"],["aavB2C","AAV B2C"],["fipe","FIPE"],["smShowroom","San Marino showroom"],
-      ["kbbLoja","KBB loja"],["smRepasse","San Marino repasse"],["dataAbertura","Data abertura"],
+      ["smRepasse","San Marino repasse"],["dataAbertura","Data abertura"],["dataRecebimento","Data recebimento estoque"],
       ["salvoEm","Salvo em"],["criado_por_email","Criado por"],["atualizado_em","Atualizado em"]
     ];
     const linhas = portalAvaliacoesLista.map(row => {
@@ -2425,6 +2457,17 @@ if($("dataAbertura") && !$("dataAbertura").value){
     else setBusy(btn, true, "Salvando...");
     try{
       if(auto) setStatus("Salvando automaticamente...", "");
+      const placaEl = byId("placa");
+      const placaValida = placaEl && /^[A-Z][A-Z0-9]*$/.test((placaEl.value || "").trim().toUpperCase());
+      if(!placaValida){
+        if(placaEl){
+          placaEl.setCustomValidity(placaEl.value ? "A placa deve comecar com uma letra." : "Informe a placa.");
+          if(!auto) placaEl.reportValidity();
+        }
+        setStatus(placaEl && placaEl.value ? "A placa deve comecar com uma letra." : "Informe a placa antes de salvar.", "bad");
+        return;
+      }
+      placaEl.setCustomValidity("");
       if(typeof calc === "function") calc();
       const dados = coletarDados();
       let codigo = avaliacaoAtual && avaliacaoAtual.codigo ? avaliacaoAtual.codigo : codigoDaUrl();
