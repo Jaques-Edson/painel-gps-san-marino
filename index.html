@@ -117,8 +117,8 @@ input:focus,select:focus{border-color:rgba(37,215,243,.65);box-shadow:0 0 0 2px 
 .field.has-warning input{border-color:rgba(251,191,36,.78)!important;background:rgba(251,191,36,.08)!important;box-shadow:0 0 0 2px rgba(251,191,36,.13)!important;}
 .field.has-warning .field-warning{display:block;}
 .field.valor-destaque input{border-color:rgba(37,215,243,.55);background:linear-gradient(135deg,rgba(37,215,243,.1),rgba(2,8,18,.92));box-shadow:inset 3px 0 0 rgba(37,215,243,.7);}
-.field.valor-destaque.flex-valor input{border-color:rgba(255,215,0,.55);background:linear-gradient(135deg,rgba(255,215,0,.1),rgba(2,8,18,.92));box-shadow:inset 3px 0 0 rgba(255,215,0,.72);}
-.field.valor-destaque.repasse-valor input{border-color:rgba(34,211,238,.52);background:linear-gradient(135deg,rgba(34,211,238,.09),rgba(2,8,18,.92));box-shadow:inset 3px 0 0 rgba(34,211,238,.66);}
+.field.valor-destaque.flex-valor input{border-color:rgba(255,71,71,.86);background:linear-gradient(135deg,rgba(255,71,71,.12),rgba(2,8,18,.92));box-shadow:inset 3px 0 0 rgba(255,71,71,.9),0 0 0 1px rgba(255,71,71,.24);}
+.field.valor-destaque.repasse-valor input{border-color:rgba(255,215,0,.86);background:linear-gradient(135deg,rgba(255,215,0,.12),rgba(2,8,18,.92));box-shadow:inset 3px 0 0 rgba(255,215,0,.9),0 0 0 1px rgba(255,215,0,.24);}
 .ro{background:rgba(255,200,0,.08)!important;border-color:rgba(255,200,0,.35)!important;color:#ffd700!important;font-weight:900!important;cursor:default;font-size:13px!important;height:38px!important;padding:0 6px!important;text-align:center;letter-spacing:-.25px;}
 .ro.ciano{background:rgba(37,215,243,.08)!important;border-color:rgba(37,215,243,.35)!important;color:#25d7f3!important;}
 
@@ -1034,10 +1034,10 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
           <input id="modelo" type="text" placeholder="Ex: Pulse 2023">
           <div class="field-warning">Aten&ccedil;&atilde;o ao preenchimento</div>
         </div>
-        <div class="field atencao-preenchimento">
+        <div class="field">
           <label>Placa</label>
-          <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;" maxlength="7">
-          <div id="placaAviso" class="field-warning">Aten&ccedil;&atilde;o ao preenchimento</div>
+          <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;" required aria-required="true" pattern="[A-Za-z][A-Za-z0-9]{6}" minlength="7" maxlength="7">
+          <div id="placaErro" class="field-error">Preenchimento obrigatorio</div>
         </div>
       </div>
     </div>
@@ -1984,10 +1984,13 @@ function bindMoeda(id){
   const el = $("placa"); if(!el) return;
   function validarPlaca(mostrarVazio){
     const valor = (el.value || "").trim().toUpperCase();
-    const atencao = mostrarVazio ? !valor || (valor && !/^[A-Z][A-Z0-9]{6}$/.test(valor)) : (valor && !/^[A-Z][A-Z0-9]{6}$/.test(valor));
+    const invalida = mostrarVazio ? !/^[A-Z][A-Z0-9]{6}$/.test(valor) : (valor && !/^[A-Z][A-Z0-9]{6}$/.test(valor));
     const campo = el.closest(".field");
-    if(campo) campo.classList.toggle("has-warning", !!atencao);
-    el.setCustomValidity("");
+    if(campo){
+      campo.classList.toggle("has-error", !!invalida);
+      campo.classList.remove("has-warning");
+    }
+    el.setCustomValidity(invalida ? "Preenchimento obrigatorio" : "");
     return /^[A-Z][A-Z0-9]{6}$/.test(valor);
   }
   window.validarPlacaGPS = validarPlaca;
@@ -2000,17 +2003,16 @@ function bindMoeda(id){
 })();
 
 function atualizarAvisosPreenchimento(){
-  ["modelo","placa","km"].forEach(id => {
+  ["modelo","km"].forEach(id => {
     const el = $(id);
     if(!el) return;
     const campo = el.closest(".field");
     if(!campo) return;
     const valor = (el.value || "").trim();
-    const atencao = id === "placa" ? (!valor || !/^[A-Z][A-Z0-9]{6}$/.test(valor.toUpperCase())) : !valor;
-    campo.classList.toggle("has-warning", !!atencao);
+    campo.classList.toggle("has-warning", !valor);
   });
 }
-["modelo","placa","km"].forEach(id => {
+["modelo","km"].forEach(id => {
   const el = $(id);
   if(el){
     el.addEventListener("input", atualizarAvisosPreenchimento);
@@ -2521,8 +2523,13 @@ if($("dataAbertura") && !$("dataAbertura").value){
     try{
       if(auto) setStatus("Salvando automaticamente...", "");
       const placaEl = byId("placa");
-      if(window.validarPlacaGPS) window.validarPlacaGPS(true);
+      const placaValida = placaEl && (window.validarPlacaGPS ? window.validarPlacaGPS(true) : /^[A-Z][A-Z0-9]{6}$/.test((placaEl.value || "").trim().toUpperCase()));
       if(typeof atualizarAvisosPreenchimento === "function") atualizarAvisosPreenchimento();
+      if(!placaValida){
+        if(placaEl) placaEl.reportValidity();
+        setStatus("Preenchimento obrigatorio", "bad");
+        return;
+      }
       if(placaEl) placaEl.setCustomValidity("");
       if(typeof calc === "function") calc();
       const dados = coletarDados();
