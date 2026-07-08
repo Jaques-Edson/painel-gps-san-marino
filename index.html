@@ -101,6 +101,7 @@ body.light-view .gps-badge{background:linear-gradient(135deg,#e0f2fe,#fef3c7);bo
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;}
 .field{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.loja-field{margin-bottom:8px;}
 .field label{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#7a9ab8;}
 input[type="text"],input[type="number"],input[type="date"],select{
   height:34px;width:100%;border:1px solid rgba(255,255,255,.15);border-radius:7px;
@@ -1030,8 +1031,19 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
 
   <!-- ESQUERDO -->
   <div class="left">
-    <!-- AVALIADOR + GESTOR (NOMES) -->
+    <!-- LOJA + AVALIADOR + GESTOR (NOMES) -->
     <div class="blk">
+      <div class="field loja-field">
+        <label>Loja</label>
+        <select id="loja">
+          <option value="">Selecione</option>
+          <option value="Matriz">Matriz</option>
+          <option value="Zona Sul">Zona Sul</option>
+          <option value="Gravata&iacute;">Gravata&iacute;</option>
+          <option value="Viam&atilde;o">Viam&atilde;o</option>
+          <option value="Multimarcas">Multimarcas</option>
+        </select>
+      </div>
       <div class="g2">
         <div class="field">
           <label>Avaliador SM</label>
@@ -2170,7 +2182,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
   const SESSION_KEY = "gps-supabase-session";
   const AVALIACAO_KEY = "gps-avaliacao-atual";
   const CAMPOS_PORTAL = [
-    "avaliadorNome","gestorNome","modelo","placa","modeloInteresse","modalidadeInteresse","avaliacao","avaliacaoGestor","reparo","vlrSugAAV","km",
+    "loja","avaliadorNome","gestorNome","modelo","placa","modeloInteresse","modalidadeInteresse","avaliacao","avaliacaoGestor","reparo","vlrSugAAV","km",
     "aavRepasse","aavB2C","fipe","smShowroom","smRepasse","dataAbertura","dataRecebimento",
     "kbbRepasse","mediaShowroom","mediaRepasse","kitRafael","taxaJuros"
   ];
