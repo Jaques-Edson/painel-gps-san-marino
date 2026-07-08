@@ -110,6 +110,9 @@ input[type="text"],input[type="number"],input[type="date"],select{
 }
 input::placeholder{color:rgba(120,155,185,.4);font-weight:400;}
 input:focus,select:focus{border-color:rgba(37,215,243,.65);box-shadow:0 0 0 2px rgba(37,215,243,.1);}
+.field-error{display:none;margin-top:3px;color:#ff4747;font-size:9px;font-weight:900;line-height:1.15;text-transform:uppercase;letter-spacing:.35px;}
+.field.has-error input{border-color:#ff4747!important;background:rgba(120,0,0,.18)!important;box-shadow:0 0 0 2px rgba(255,71,71,.18)!important;color:#fff!important;}
+.field.has-error .field-error{display:block;}
 .ro{background:rgba(255,200,0,.08)!important;border-color:rgba(255,200,0,.35)!important;color:#ffd700!important;font-weight:900!important;cursor:default;font-size:13px!important;height:38px!important;padding:0 6px!important;text-align:center;letter-spacing:-.25px;}
 .ro.ciano{background:rgba(37,215,243,.08)!important;border-color:rgba(37,215,243,.35)!important;color:#25d7f3!important;}
 
@@ -1024,6 +1027,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
         <div class="field">
           <label>Placa</label>
           <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;" required aria-required="true" pattern="[A-Za-z][A-Za-z0-9]{6}" minlength="7" maxlength="7">
+          <div id="placaErro" class="field-error">Placa obrigatoria: 7 caracteres, comecando por letra.</div>
         </div>
       </div>
     </div>
@@ -1968,11 +1972,21 @@ function bindMoeda(id){
 // Placa: uppercase automático
 (function bindPlaca(){
   const el = $("placa"); if(!el) return;
+  function validarPlaca(mostrarVazio){
+    const valor = (el.value || "").trim().toUpperCase();
+    const invalida = mostrarVazio ? !/^[A-Z][A-Z0-9]{6}$/.test(valor) : (valor && !/^[A-Z][A-Z0-9]{6}$/.test(valor));
+    const campo = el.closest(".field");
+    if(campo) campo.classList.toggle("has-error", !!invalida);
+    el.setCustomValidity(invalida ? (valor ? "Informe os 7 caracteres da placa, comecando por uma letra." : "Informe a placa.") : "");
+    return !invalida && /^[A-Z][A-Z0-9]{6}$/.test(valor);
+  }
+  window.validarPlacaGPS = validarPlaca;
   el.addEventListener("input", function(){
     this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,"");
-    this.setCustomValidity(this.value && !/^[A-Z][A-Z0-9]{6}$/.test(this.value) ? "Informe os 7 caracteres da placa, comecando por uma letra." : "");
+    validarPlaca(false);
     calc();
   });
+  el.addEventListener("blur", function(){ validarPlaca(true); });
 })();
 
 // Perfil (Showroom/Repasse) — radios visuais
@@ -2458,7 +2472,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
     try{
       if(auto) setStatus("Salvando automaticamente...", "");
       const placaEl = byId("placa");
-      const placaValida = placaEl && /^[A-Z][A-Z0-9]{6}$/.test((placaEl.value || "").trim().toUpperCase());
+      const placaValida = placaEl && (window.validarPlacaGPS ? window.validarPlacaGPS(true) : /^[A-Z][A-Z0-9]{6}$/.test((placaEl.value || "").trim().toUpperCase()));
       if(!placaValida){
         if(placaEl){
           placaEl.setCustomValidity(placaEl.value ? "Informe os 7 caracteres da placa, comecando por uma letra." : "Informe a placa.");
@@ -2468,6 +2482,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
         return;
       }
       placaEl.setCustomValidity("");
+      if(placaEl.closest(".field")) placaEl.closest(".field").classList.remove("has-error");
       if(typeof calc === "function") calc();
       const dados = coletarDados();
       let codigo = avaliacaoAtual && avaliacaoAtual.codigo ? avaliacaoAtual.codigo : codigoDaUrl();
