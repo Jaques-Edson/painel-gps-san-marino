@@ -109,6 +109,7 @@ input[type="text"],input[type="number"],input[type="date"],select{
   outline:none;transition:border-color .15s;
 }
 input::placeholder{color:rgba(120,155,185,.4);font-weight:400;}
+input[placeholder^="Ex:"]::placeholder{color:rgba(120,155,185,.18);opacity:1;}
 input:focus,select:focus{border-color:rgba(37,215,243,.65);box-shadow:0 0 0 2px rgba(37,215,243,.1);}
 .field-error{display:none;margin-top:3px;color:#ff4747;font-size:9px;font-weight:900;line-height:1.15;text-transform:uppercase;letter-spacing:.35px;}
 .field-warning{display:none;margin-top:3px;color:#fbbf24;font-size:9px;font-weight:900;line-height:1.15;text-transform:uppercase;letter-spacing:.35px;}
