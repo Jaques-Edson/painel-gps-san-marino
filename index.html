@@ -855,10 +855,8 @@ body.light-view .class-box.active{
 }
 #portalSaveBtn.save-main:hover,#portalSavePatioBtn.save-main:hover{filter:brightness(1.08);}
 .field input[readonly]{opacity:.82;cursor:not-allowed;background:rgba(148,163,184,.12);}
-.portal-recebimento{display:grid;grid-template-columns:minmax(120px,180px) 96px;gap:7px;align-items:end;margin-top:2px;max-width:290px;opacity:.9;}
-.portal-recebimento .field{gap:2px;}
-.portal-recebimento .field label{font-size:8px;letter-spacing:.45px;color:#7a9ab8;}
-.portal-recebimento input{min-height:28px!important;height:28px!important;font-size:10px!important;padding:0 7px!important;}
+.portal-recebimento{display:grid;grid-template-columns:minmax(120px,180px) 96px;gap:7px;align-items:center;margin-top:2px;max-width:290px;opacity:.9;}
+.portal-recebimento-label{font-size:8px;font-weight:900;letter-spacing:.45px;text-transform:uppercase;color:#7a9ab8;}
 .portal-recebimento .portal-btn{min-height:28px!important;font-size:10px!important;padding:5px 8px!important;}
 @media(max-width:560px){.portal-recebimento{grid-template-columns:1fr 92px;max-width:none;}}
 .portal-status{min-height:15px;font-size:10px;font-weight:800;color:#9db7d2;line-height:1.3;overflow-wrap:anywhere;}
@@ -1301,11 +1299,8 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
           <button type="button" class="portal-btn subtle" id="portalLogoutBtn">Sair do portal</button>
         </div>
         <div class="portal-recebimento gestor-portal-only">
-          <div class="field">
-            <label>Recebimento estoque SM</label>
-            <input id="dataRecebimento" type="date" required aria-required="true">
-            <div id="dataRecebimentoErro" class="field-error">Preenchimento obrigatorio</div>
-          </div>
+          <div class="portal-recebimento-label">Recebimento estoque SM</div>
+          <input id="dataRecebimento" type="hidden">
           <button type="button" class="portal-btn subtle" id="registrarRecebimentoBtn">Registrar</button>
         </div>
         <div class="portal-link" id="portalLink"></div>
@@ -2081,26 +2076,12 @@ $("modelo").addEventListener("input",calc);
 if($("modeloInteresse")) $("modeloInteresse").addEventListener("input",calc);
 if($("modalidadeInteresse")) $("modalidadeInteresse").addEventListener("change",calc);
 $("dataAbertura").addEventListener("change",calc);
-if($("dataRecebimento")) $("dataRecebimento").addEventListener("change", function(){
-  const campo = this.closest(".field");
-  if(campo) campo.classList.toggle("has-error", !this.value);
-  this.setCustomValidity(this.value ? "" : "Preenchimento obrigatorio");
-  calc();
-});
+if($("dataRecebimento")) $("dataRecebimento").addEventListener("change", calc);
 if($("registrarRecebimentoBtn")) $("registrarRecebimentoBtn").addEventListener("click", function(){
   const campo = $("dataRecebimento");
-  if(!campo) return;
-  const wrap = campo.closest(".field");
-  if(!campo.value){
-    if(wrap) wrap.classList.add("has-error");
-    campo.setCustomValidity("Preenchimento obrigatorio");
-    campo.reportValidity();
-    if(window.portalAviso) window.portalAviso("Preenchimento obrigatorio", "bad");
-    return;
-  }
-  if(wrap) wrap.classList.remove("has-error");
-  campo.setCustomValidity("");
-  calc();
+  const dataAvaliacao = $("dataAbertura");
+  if(!campo || !dataAvaliacao || !dataAvaliacao.value) return;
+  campo.value = dataAvaliacao.value;
   campo.dispatchEvent(new Event("change", { bubbles:true }));
   if(window.portalAviso) window.portalAviso("Recebimento no estoque SM registrado em " + fmtData(parseDateInput(campo.value)) + ".", "ok");
 });
