@@ -1023,7 +1023,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
         </div>
         <div class="field">
           <label>Placa</label>
-          <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;" required pattern="[A-Za-z][A-Za-z0-9]*" maxlength="8">
+          <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;" required aria-required="true" pattern="[A-Za-z][A-Za-z0-9]{6}" minlength="7" maxlength="7">
         </div>
       </div>
     </div>
@@ -1970,7 +1970,7 @@ function bindMoeda(id){
   const el = $("placa"); if(!el) return;
   el.addEventListener("input", function(){
     this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,"");
-    this.setCustomValidity(this.value && !/^[A-Z]/.test(this.value) ? "A placa deve comecar com uma letra." : "");
+    this.setCustomValidity(this.value && !/^[A-Z][A-Z0-9]{6}$/.test(this.value) ? "Informe os 7 caracteres da placa, comecando por uma letra." : "");
     calc();
   });
 })();
@@ -2458,13 +2458,13 @@ if($("dataAbertura") && !$("dataAbertura").value){
     try{
       if(auto) setStatus("Salvando automaticamente...", "");
       const placaEl = byId("placa");
-      const placaValida = placaEl && /^[A-Z][A-Z0-9]*$/.test((placaEl.value || "").trim().toUpperCase());
+      const placaValida = placaEl && /^[A-Z][A-Z0-9]{6}$/.test((placaEl.value || "").trim().toUpperCase());
       if(!placaValida){
         if(placaEl){
-          placaEl.setCustomValidity(placaEl.value ? "A placa deve comecar com uma letra." : "Informe a placa.");
+          placaEl.setCustomValidity(placaEl.value ? "Informe os 7 caracteres da placa, comecando por uma letra." : "Informe a placa.");
           if(!auto) placaEl.reportValidity();
         }
-        setStatus(placaEl && placaEl.value ? "A placa deve comecar com uma letra." : "Informe a placa antes de salvar.", "bad");
+        setStatus(placaEl && placaEl.value ? "Informe a placa completa com 7 caracteres, comecando por uma letra." : "Informe a placa antes de salvar.", "bad");
         return;
       }
       placaEl.setCustomValidity("");
