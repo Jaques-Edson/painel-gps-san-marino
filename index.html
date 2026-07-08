@@ -1027,7 +1027,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
         <div class="field">
           <label>Placa</label>
           <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;" required aria-required="true" pattern="[A-Za-z][A-Za-z0-9]{6}" minlength="7" maxlength="7">
-          <div id="placaErro" class="field-error">Placa obrigatoria: 7 caracteres, comecando por letra.</div>
+          <div id="placaErro" class="field-error">Preenchimento obrigatorio</div>
         </div>
       </div>
     </div>
@@ -1977,7 +1977,7 @@ function bindMoeda(id){
     const invalida = mostrarVazio ? !/^[A-Z][A-Z0-9]{6}$/.test(valor) : (valor && !/^[A-Z][A-Z0-9]{6}$/.test(valor));
     const campo = el.closest(".field");
     if(campo) campo.classList.toggle("has-error", !!invalida);
-    el.setCustomValidity(invalida ? (valor ? "Informe os 7 caracteres da placa, comecando por uma letra." : "Informe a placa.") : "");
+    el.setCustomValidity(invalida ? (valor ? "Preenchimento obrigatorio" : "Preenchimento obrigatorio") : "");
     return !invalida && /^[A-Z][A-Z0-9]{6}$/.test(valor);
   }
   window.validarPlacaGPS = validarPlaca;
@@ -2475,10 +2475,10 @@ if($("dataAbertura") && !$("dataAbertura").value){
       const placaValida = placaEl && (window.validarPlacaGPS ? window.validarPlacaGPS(true) : /^[A-Z][A-Z0-9]{6}$/.test((placaEl.value || "").trim().toUpperCase()));
       if(!placaValida){
         if(placaEl){
-          placaEl.setCustomValidity(placaEl.value ? "Informe os 7 caracteres da placa, comecando por uma letra." : "Informe a placa.");
+          placaEl.setCustomValidity(placaEl.value ? "Preenchimento obrigatorio" : "Preenchimento obrigatorio");
           if(!auto) placaEl.reportValidity();
         }
-        setStatus(placaEl && placaEl.value ? "Informe a placa completa com 7 caracteres, comecando por uma letra." : "Informe a placa antes de salvar.", "bad");
+        setStatus(placaEl && placaEl.value ? "Preenchimento obrigatorio" : "Preenchimento obrigatorio", "bad");
         return;
       }
       placaEl.setCustomValidity("");
