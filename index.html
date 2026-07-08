@@ -1143,10 +1143,11 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
     <div class="blk gestor-only">
       <div class="recebimento-actions">
         <div class="field">
-          <label>Data de recebimento no estoque</label>
-          <input id="dataRecebimento" type="date">
+          <label>Data de recebimento no estoque SM</label>
+          <input id="dataRecebimento" type="date" required aria-required="true">
+          <div id="dataRecebimentoErro" class="field-error">Preenchimento obrigatorio</div>
         </div>
-        <button type="button" class="portal-btn" id="registrarRecebimentoBtn">Registrar recebimento hoje</button>
+        <button type="button" class="portal-btn" id="registrarRecebimentoBtn">Registrar recebimento no estoque SM</button>
       </div>
     </div>
 
@@ -2020,18 +2021,28 @@ $("modelo").addEventListener("input",calc);
 if($("modeloInteresse")) $("modeloInteresse").addEventListener("input",calc);
 if($("modalidadeInteresse")) $("modalidadeInteresse").addEventListener("change",calc);
 $("dataAbertura").addEventListener("change",calc);
-if($("dataRecebimento")) $("dataRecebimento").addEventListener("change",calc);
+if($("dataRecebimento")) $("dataRecebimento").addEventListener("change", function(){
+  const campo = this.closest(".field");
+  if(campo) campo.classList.toggle("has-error", !this.value);
+  this.setCustomValidity(this.value ? "" : "Preenchimento obrigatorio");
+  calc();
+});
 if($("registrarRecebimentoBtn")) $("registrarRecebimentoBtn").addEventListener("click", function(){
   const campo = $("dataRecebimento");
   if(!campo) return;
-  if(campo.value){
-    if(window.portalAviso) window.portalAviso("Recebimento ja registrado. A data pode ser editada no campo.", "ok");
+  const wrap = campo.closest(".field");
+  if(!campo.value){
+    if(wrap) wrap.classList.add("has-error");
+    campo.setCustomValidity("Preenchimento obrigatorio");
+    campo.reportValidity();
+    if(window.portalAviso) window.portalAviso("Preenchimento obrigatorio", "bad");
     return;
   }
-  campo.value = isoLocalDate(new Date());
+  if(wrap) wrap.classList.remove("has-error");
+  campo.setCustomValidity("");
   calc();
   campo.dispatchEvent(new Event("change", { bubbles:true }));
-  if(window.portalAviso) window.portalAviso("Recebimento no estoque registrado em " + fmtData(parseDateInput(campo.value)) + ".", "ok");
+  if(window.portalAviso) window.portalAviso("Recebimento no estoque SM registrado em " + fmtData(parseDateInput(campo.value)) + ".", "ok");
 });
 $("dlBtn").addEventListener("click",download);
 if($("htmlBtn")) $("htmlBtn").addEventListener("click",exportHtmlSalvo);
