@@ -2084,6 +2084,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
     const metaTheme = document.querySelector('meta[name="theme-color"]');
     if(metaTheme) metaTheme.setAttribute("content", patio ? "#f5f2e8" : "#04101e");
     try{ localStorage.setItem("gps-papel", patio ? "patio" : "gestor"); }catch(e){}
+    if(typeof window.atualizarTravaAvaliacaoAvaliador === "function") window.atualizarTravaAvaliacaoAvaliador();
     if(typeof calc === "function") calc();
   }
   window.aplicarPapelOperacional = aplicar;
@@ -2299,13 +2300,13 @@ if($("dataAbertura") && !$("dataAbertura").value){
     if(user) user.textContent = logged ? ((portalSession.user && portalSession.user.email) || "Usuario") + (portalPerfil && portalPerfil.papel ? " - " + portalPerfil.papel : "") : "";
     if(linkEl) linkEl.textContent = linkAtual();
   }
-  function atualizarTravaAvaliacaoAvaliador(){
+  window.atualizarTravaAvaliacaoAvaliador = function atualizarTravaAvaliacaoAvaliador(){
     const el = byId("avaliacao");
     if(!el) return;
-    const papel = portalPerfil && portalPerfil.papel ? String(portalPerfil.papel).toLowerCase() : "";
     const jaSalva = !!(avaliacaoAtual && (avaliacaoAtual.id || avaliacaoAtual.codigo));
-    el.readOnly = papel === "gestor" || (papel === "avaliador" && jaSalva);
-  }
+    const modoGestor = !document.body.classList.contains("patio-role");
+    el.readOnly = jaSalva || modoGestor;
+  };
   function aplicarPermissao(){
     const papel = portalPerfil && portalPerfil.papel ? String(portalPerfil.papel).toLowerCase() : "";
     window.portalPerfilPapel = papel;
