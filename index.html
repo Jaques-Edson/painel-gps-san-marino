@@ -2305,7 +2305,8 @@ if($("dataAbertura") && !$("dataAbertura").value){
     if(!el) return;
     const jaSalva = !!(avaliacaoAtual && (avaliacaoAtual.id || avaliacaoAtual.codigo));
     const modoGestor = !document.body.classList.contains("patio-role");
-    el.readOnly = jaSalva || modoGestor;
+    const temValorSalvo = !!String(el.value || "").trim();
+    el.readOnly = modoGestor || (jaSalva && temValorSalvo);
   };
   function aplicarPermissao(){
     const papel = portalPerfil && portalPerfil.papel ? String(portalPerfil.papel).toLowerCase() : "";
