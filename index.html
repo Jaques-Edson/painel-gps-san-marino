@@ -111,8 +111,14 @@ input[type="text"],input[type="number"],input[type="date"],select{
 input::placeholder{color:rgba(120,155,185,.4);font-weight:400;}
 input:focus,select:focus{border-color:rgba(37,215,243,.65);box-shadow:0 0 0 2px rgba(37,215,243,.1);}
 .field-error{display:none;margin-top:3px;color:#ff4747;font-size:9px;font-weight:900;line-height:1.15;text-transform:uppercase;letter-spacing:.35px;}
+.field-warning{display:none;margin-top:3px;color:#fbbf24;font-size:9px;font-weight:900;line-height:1.15;text-transform:uppercase;letter-spacing:.35px;}
 .field.has-error input{border-color:#ff4747!important;background:rgba(120,0,0,.18)!important;box-shadow:0 0 0 2px rgba(255,71,71,.18)!important;color:#fff!important;}
 .field.has-error .field-error{display:block;}
+.field.has-warning input{border-color:rgba(251,191,36,.78)!important;background:rgba(251,191,36,.08)!important;box-shadow:0 0 0 2px rgba(251,191,36,.13)!important;}
+.field.has-warning .field-warning{display:block;}
+.field.valor-destaque input{border-color:rgba(37,215,243,.55);background:linear-gradient(135deg,rgba(37,215,243,.1),rgba(2,8,18,.92));box-shadow:inset 3px 0 0 rgba(37,215,243,.7);}
+.field.valor-destaque.flex-valor input{border-color:rgba(255,215,0,.55);background:linear-gradient(135deg,rgba(255,215,0,.1),rgba(2,8,18,.92));box-shadow:inset 3px 0 0 rgba(255,215,0,.72);}
+.field.valor-destaque.repasse-valor input{border-color:rgba(34,211,238,.52);background:linear-gradient(135deg,rgba(34,211,238,.09),rgba(2,8,18,.92));box-shadow:inset 3px 0 0 rgba(34,211,238,.66);}
 .ro{background:rgba(255,200,0,.08)!important;border-color:rgba(255,200,0,.35)!important;color:#ffd700!important;font-weight:900!important;cursor:default;font-size:13px!important;height:38px!important;padding:0 6px!important;text-align:center;letter-spacing:-.25px;}
 .ro.ciano{background:rgba(37,215,243,.08)!important;border-color:rgba(37,215,243,.35)!important;color:#25d7f3!important;}
 
@@ -1023,14 +1029,15 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
     <!-- VEÍCULO + PLACA -->
     <div class="blk">
       <div class="g2">
-        <div class="field">
+        <div class="field atencao-preenchimento">
           <label>Veículo</label>
           <input id="modelo" type="text" placeholder="Ex: Pulse 2023">
+          <div class="field-warning">Aten&ccedil;&atilde;o ao preenchimento</div>
         </div>
-        <div class="field">
+        <div class="field atencao-preenchimento">
           <label>Placa</label>
-          <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;" required aria-required="true" pattern="[A-Za-z][A-Za-z0-9]{6}" minlength="7" maxlength="7">
-          <div id="placaErro" class="field-error">Preenchimento obrigatorio</div>
+          <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;" maxlength="7">
+          <div id="placaAviso" class="field-warning">Aten&ccedil;&atilde;o ao preenchimento</div>
         </div>
       </div>
     </div>
@@ -1058,7 +1065,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
     <!-- AVALIAÇÃO + REPARO -->
     <div class="blk flex-blk">
       <div class="g2">
-        <div class="field">
+        <div class="field valor-destaque flex-valor">
           <label>Avalia&ccedil;&atilde;o Avaliador SM (R$)</label>
           <input id="avaliacao" type="text" inputmode="numeric" placeholder="Ex: 85.000">
         </div>
@@ -1076,9 +1083,10 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
           <label>AAV Avalia&ccedil;&atilde;o (R$)</label>
           <input id="vlrSugAAV" type="text" inputmode="numeric" placeholder="Ex: 85.500">
         </div>
-        <div class="field">
+        <div class="field atencao-preenchimento">
           <label>KM</label>
           <input id="km" type="text" inputmode="numeric" placeholder="Ex: 120000">
+          <div class="field-warning">Aten&ccedil;&atilde;o ao preenchimento</div>
         </div>
       </div>
     </div>
@@ -1132,11 +1140,11 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
     <!-- AVALIACAO GESTOR + GESTOR SM -->
     <div class="blk ciano-blk gestor-only">
       <div class="g2">
-        <div class="field">
+        <div class="field valor-destaque flex-valor">
           <label>Avalia&ccedil;&atilde;o Gestor SM (R$)</label>
           <input id="avaliacaoGestor" type="text" inputmode="numeric" placeholder="Ex: 85.000">
         </div>
-        <div class="field">
+        <div class="field valor-destaque">
           <label>Gestor SM / Showroom (R$)</label>
           <input id="smShowroom" type="text" inputmode="numeric" placeholder="Ex: 102.000">
         </div>
@@ -1146,7 +1154,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
 
     <!-- REPASSE SM -->
     <div class="blk gestor-only">
-      <div class="field">
+      <div class="field valor-destaque repasse-valor">
         <label>San Marino Repasse (R$)</label>
         <input id="smRepasse" type="text" inputmode="numeric" placeholder="Ex: 90.000">
       </div>
@@ -1976,11 +1984,11 @@ function bindMoeda(id){
   const el = $("placa"); if(!el) return;
   function validarPlaca(mostrarVazio){
     const valor = (el.value || "").trim().toUpperCase();
-    const invalida = mostrarVazio ? !/^[A-Z][A-Z0-9]{6}$/.test(valor) : (valor && !/^[A-Z][A-Z0-9]{6}$/.test(valor));
+    const atencao = mostrarVazio ? !valor || (valor && !/^[A-Z][A-Z0-9]{6}$/.test(valor)) : (valor && !/^[A-Z][A-Z0-9]{6}$/.test(valor));
     const campo = el.closest(".field");
-    if(campo) campo.classList.toggle("has-error", !!invalida);
-    el.setCustomValidity(invalida ? (valor ? "Preenchimento obrigatorio" : "Preenchimento obrigatorio") : "");
-    return !invalida && /^[A-Z][A-Z0-9]{6}$/.test(valor);
+    if(campo) campo.classList.toggle("has-warning", !!atencao);
+    el.setCustomValidity("");
+    return /^[A-Z][A-Z0-9]{6}$/.test(valor);
   }
   window.validarPlacaGPS = validarPlaca;
   el.addEventListener("input", function(){
@@ -1990,6 +1998,25 @@ function bindMoeda(id){
   });
   el.addEventListener("blur", function(){ validarPlaca(true); });
 })();
+
+function atualizarAvisosPreenchimento(){
+  ["modelo","placa","km"].forEach(id => {
+    const el = $(id);
+    if(!el) return;
+    const campo = el.closest(".field");
+    if(!campo) return;
+    const valor = (el.value || "").trim();
+    const atencao = id === "placa" ? (!valor || !/^[A-Z][A-Z0-9]{6}$/.test(valor.toUpperCase())) : !valor;
+    campo.classList.toggle("has-warning", !!atencao);
+  });
+}
+["modelo","placa","km"].forEach(id => {
+  const el = $(id);
+  if(el){
+    el.addEventListener("input", atualizarAvisosPreenchimento);
+    el.addEventListener("blur", atualizarAvisosPreenchimento);
+  }
+});
 
 // Perfil (Showroom/Repasse) — radios visuais
 (function bindPerfil(){
@@ -2494,17 +2521,9 @@ if($("dataAbertura") && !$("dataAbertura").value){
     try{
       if(auto) setStatus("Salvando automaticamente...", "");
       const placaEl = byId("placa");
-      const placaValida = placaEl && (window.validarPlacaGPS ? window.validarPlacaGPS(true) : /^[A-Z][A-Z0-9]{6}$/.test((placaEl.value || "").trim().toUpperCase()));
-      if(!placaValida){
-        if(placaEl){
-          placaEl.setCustomValidity(placaEl.value ? "Preenchimento obrigatorio" : "Preenchimento obrigatorio");
-          if(!auto) placaEl.reportValidity();
-        }
-        setStatus(placaEl && placaEl.value ? "Preenchimento obrigatorio" : "Preenchimento obrigatorio", "bad");
-        return;
-      }
-      placaEl.setCustomValidity("");
-      if(placaEl.closest(".field")) placaEl.closest(".field").classList.remove("has-error");
+      if(window.validarPlacaGPS) window.validarPlacaGPS(true);
+      if(typeof atualizarAvisosPreenchimento === "function") atualizarAvisosPreenchimento();
+      if(placaEl) placaEl.setCustomValidity("");
       if(typeof calc === "function") calc();
       const dados = coletarDados();
       let codigo = avaliacaoAtual && avaliacaoAtual.codigo ? avaliacaoAtual.codigo : codigoDaUrl();
