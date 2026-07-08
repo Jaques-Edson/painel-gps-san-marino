@@ -2299,6 +2299,13 @@ if($("dataAbertura") && !$("dataAbertura").value){
     if(user) user.textContent = logged ? ((portalSession.user && portalSession.user.email) || "Usuario") + (portalPerfil && portalPerfil.papel ? " - " + portalPerfil.papel : "") : "";
     if(linkEl) linkEl.textContent = linkAtual();
   }
+  function atualizarTravaAvaliacaoAvaliador(){
+    const el = byId("avaliacao");
+    if(!el) return;
+    const papel = portalPerfil && portalPerfil.papel ? String(portalPerfil.papel).toLowerCase() : "";
+    const jaSalva = !!(avaliacaoAtual && (avaliacaoAtual.id || avaliacaoAtual.codigo));
+    el.readOnly = papel === "gestor" || (papel === "avaliador" && jaSalva);
+  }
   function aplicarPermissao(){
     const papel = portalPerfil && portalPerfil.papel ? String(portalPerfil.papel).toLowerCase() : "";
     window.portalPerfilPapel = papel;
@@ -2312,8 +2319,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
       if(typeof window.aplicarPapelOperacional === "function") window.aplicarPapelOperacional("gestor");
       if(btn) btn.title = "";
     }
-    const avaliacaoAvaliador = byId("avaliacao");
-    if(avaliacaoAvaliador) avaliacaoAvaliador.readOnly = papel === "gestor";
+    atualizarTravaAvaliacaoAvaliador();
   }
   async function carregarPerfil(){
     if(!portalSession || !portalSession.user) return;
@@ -2447,6 +2453,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
     try{ localStorage.setItem(AVALIACAO_KEY, JSON.stringify({ id:row.id, codigo:row.codigo })); }catch(e){}
     aplicarDados(row.dados || {});
     autoSaveAssinatura = assinaturaDados();
+    atualizarTravaAvaliacaoAvaliador();
     atualizarUi();
     setStatus("Avaliacao carregada: " + row.codigo, "ok");
   }
@@ -2466,6 +2473,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
     portalAvaliacoesLista = [];
     autoSaveAssinatura = "";
     clearTimeout(autoSaveTimer);
+    atualizarTravaAvaliacaoAvaliador();
     if(history && history.replaceState){
       try{ history.replaceState(null, "", location.pathname || PUBLIC_APP_URL); }catch(e){}
     }
@@ -2541,6 +2549,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
       }
       try{ localStorage.setItem(AVALIACAO_KEY, JSON.stringify({ id:avaliacaoAtual.id, codigo:avaliacaoAtual.codigo })); }catch(e){}
       autoSaveAssinatura = assinaturaDados();
+      atualizarTravaAvaliacaoAvaliador();
       atualizarUi();
       if(auto){
         const hora = new Date().toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit" });
