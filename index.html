@@ -1138,7 +1138,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
         <div class="field">
           <label>Placa</label>
           <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;" required aria-required="true" pattern="[A-Za-z][A-Za-z0-9]{6}" minlength="7" maxlength="7">
-          <div id="placaErro" class="field-error">Preenchimento obrigatorio</div>
+          <div id="placaErro" class="field-error">Favor preencher</div>
         </div>
         <div class="field valor-destaque flex-valor gestor-only">
           <label>R$ Avalia&ccedil;&atilde;o</label>
@@ -1986,7 +1986,7 @@ function bindMoeda(id){
       campo.classList.toggle("has-error", !!(bloquear && invalida));
       campo.classList.toggle("has-warning", !!(!bloquear && atencao));
     }
-    el.setCustomValidity((bloquear && invalida) ? "Preenchimento obrigatorio" : "");
+    el.setCustomValidity((bloquear && invalida) ? "Favor preencher" : "");
     return !invalida;
   }
   window.validarPlacaGPS = validarPlaca;
@@ -2523,7 +2523,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
       if(typeof atualizarAvisosPreenchimento === "function") atualizarAvisosPreenchimento();
       if(!placaValida){
         if(placaEl) placaEl.reportValidity();
-        setStatus("Preenchimento obrigatorio", "bad");
+        setStatus("Favor preencher", "bad");
         return;
       }
       if(placaEl) placaEl.setCustomValidity("");
