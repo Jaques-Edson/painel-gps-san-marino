@@ -119,6 +119,10 @@ input:focus,select:focus{border-color:rgba(37,215,243,.65);box-shadow:0 0 0 2px 
 .field.valor-destaque input{border-color:rgba(37,215,243,.55);background:linear-gradient(135deg,rgba(37,215,243,.1),rgba(2,8,18,.92));box-shadow:inset 3px 0 0 rgba(37,215,243,.7);}
 .field.valor-destaque.flex-valor input{border-color:rgba(255,71,71,.86);background:linear-gradient(135deg,rgba(255,71,71,.12),rgba(2,8,18,.92));box-shadow:inset 3px 0 0 rgba(255,71,71,.9),0 0 0 1px rgba(255,71,71,.24);}
 .field.valor-destaque.repasse-valor input{border-color:rgba(255,215,0,.86);background:linear-gradient(135deg,rgba(255,215,0,.12),rgba(2,8,18,.92));box-shadow:inset 3px 0 0 rgba(255,215,0,.9),0 0 0 1px rgba(255,215,0,.24);}
+.field.veiculo-destaque input{border-color:rgba(34,197,94,.72);background:linear-gradient(135deg,rgba(34,197,94,.1),rgba(2,8,18,.92));box-shadow:inset 3px 0 0 rgba(34,197,94,.78),0 0 0 1px rgba(34,197,94,.18);}
+.valores-gestor-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.valores-gestor-grid .field{min-width:0;}
+@media(max-width:560px){.valores-gestor-grid{grid-template-columns:1fr 1fr;gap:6px;}}
 .ro{background:rgba(255,200,0,.08)!important;border-color:rgba(255,200,0,.35)!important;color:#ffd700!important;font-weight:900!important;cursor:default;font-size:13px!important;height:38px!important;padding:0 6px!important;text-align:center;letter-spacing:-.25px;}
 .ro.ciano{background:rgba(37,215,243,.08)!important;border-color:rgba(37,215,243,.35)!important;color:#25d7f3!important;}
 
@@ -1011,7 +1015,6 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
 
   <!-- ESQUERDO -->
   <div class="left">
-
     <!-- AVALIADOR + GESTOR (NOMES) -->
     <div class="blk">
       <div class="g2">
@@ -1026,19 +1029,11 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
       </div>
     </div>
 
-    <!-- VEÍCULO + PLACA -->
+    <!-- VEICULO -->
     <div class="blk">
-      <div class="g2">
-        <div class="field atencao-preenchimento">
-          <label>Veículo</label>
-          <input id="modelo" type="text" placeholder="Ex: Pulse 2023">
-          <div class="field-warning">Aten&ccedil;&atilde;o ao preenchimento</div>
-        </div>
-        <div class="field">
-          <label>Placa</label>
-          <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;" required aria-required="true" pattern="[A-Za-z][A-Za-z0-9]{6}" minlength="7" maxlength="7">
-          <div id="placaErro" class="field-error">Preenchimento obrigatorio</div>
-        </div>
+      <div class="field veiculo-destaque">
+        <label>Ve&iacute;culo</label>
+        <input id="modelo" type="text" placeholder="Ex: Pulse 2023">
       </div>
     </div>
 
@@ -1137,26 +1132,26 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
       </div>
     </div>
 
-    <!-- AVALIACAO GESTOR + GESTOR SM -->
-    <div class="blk ciano-blk gestor-only">
-      <div class="g2">
-        <div class="field valor-destaque flex-valor">
-          <label>Avalia&ccedil;&atilde;o Gestor SM (R$)</label>
+    <!-- PLACA + VALORES GESTOR -->
+    <div class="blk ciano-blk">
+      <div class="valores-gestor-grid">
+        <div class="field">
+          <label>Placa</label>
+          <input id="placa" type="text" placeholder="Ex: ITW4E55" style="text-transform:uppercase;" required aria-required="true" pattern="[A-Za-z][A-Za-z0-9]{6}" minlength="7" maxlength="7">
+          <div id="placaErro" class="field-error">Preenchimento obrigatorio</div>
+        </div>
+        <div class="field valor-destaque flex-valor gestor-only">
+          <label>R$ Avalia&ccedil;&atilde;o</label>
           <input id="avaliacaoGestor" type="text" inputmode="numeric" placeholder="Ex: 85.000">
         </div>
-        <div class="field valor-destaque">
-          <label>Gestor SM / Showroom (R$)</label>
+        <div class="field valor-destaque repasse-valor gestor-only">
+          <label>R$ Repasse</label>
+          <input id="smRepasse" type="text" inputmode="numeric" placeholder="Ex: 90.000">
+        </div>
+        <div class="field valor-destaque gestor-only">
+          <label>R$ Showroom</label>
           <input id="smShowroom" type="text" inputmode="numeric" placeholder="Ex: 102.000">
         </div>
-      </div>
-    </div>
-
-
-    <!-- REPASSE SM -->
-    <div class="blk gestor-only">
-      <div class="field valor-destaque repasse-valor">
-        <label>San Marino Repasse (R$)</label>
-        <input id="smRepasse" type="text" inputmode="numeric" placeholder="Ex: 90.000">
       </div>
     </div>
 
@@ -1982,28 +1977,29 @@ function bindMoeda(id){
 // Placa: uppercase automático
 (function bindPlaca(){
   const el = $("placa"); if(!el) return;
-  function validarPlaca(mostrarVazio){
+  function validarPlaca(mostrarVazio, bloquear){
     const valor = (el.value || "").trim().toUpperCase();
-    const invalida = mostrarVazio ? !/^[A-Z][A-Z0-9]{6}$/.test(valor) : (valor && !/^[A-Z][A-Z0-9]{6}$/.test(valor));
+    const invalida = !/^[A-Z][A-Z0-9]{6}$/.test(valor);
+    const atencao = mostrarVazio ? invalida : (valor && invalida);
     const campo = el.closest(".field");
     if(campo){
-      campo.classList.toggle("has-error", !!invalida);
-      campo.classList.remove("has-warning");
+      campo.classList.toggle("has-error", !!(bloquear && invalida));
+      campo.classList.toggle("has-warning", !!(!bloquear && atencao));
     }
-    el.setCustomValidity(invalida ? "Preenchimento obrigatorio" : "");
-    return /^[A-Z][A-Z0-9]{6}$/.test(valor);
+    el.setCustomValidity((bloquear && invalida) ? "Preenchimento obrigatorio" : "");
+    return !invalida;
   }
   window.validarPlacaGPS = validarPlaca;
   el.addEventListener("input", function(){
     this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,"");
-    validarPlaca(false);
+    validarPlaca(false, false);
     calc();
   });
-  el.addEventListener("blur", function(){ validarPlaca(true); });
+  el.addEventListener("blur", function(){ validarPlaca(true, false); });
 })();
 
 function atualizarAvisosPreenchimento(){
-  ["modelo","km"].forEach(id => {
+  ["km"].forEach(id => {
     const el = $(id);
     if(!el) return;
     const campo = el.closest(".field");
@@ -2012,7 +2008,7 @@ function atualizarAvisosPreenchimento(){
     campo.classList.toggle("has-warning", !valor);
   });
 }
-["modelo","km"].forEach(id => {
+["km"].forEach(id => {
   const el = $(id);
   if(el){
     el.addEventListener("input", atualizarAvisosPreenchimento);
@@ -2523,7 +2519,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
     try{
       if(auto) setStatus("Salvando automaticamente...", "");
       const placaEl = byId("placa");
-      const placaValida = placaEl && (window.validarPlacaGPS ? window.validarPlacaGPS(true) : /^[A-Z][A-Z0-9]{6}$/.test((placaEl.value || "").trim().toUpperCase()));
+      const placaValida = placaEl && (window.validarPlacaGPS ? window.validarPlacaGPS(true, true) : /^[A-Z][A-Z0-9]{6}$/.test((placaEl.value || "").trim().toUpperCase()));
       if(typeof atualizarAvisosPreenchimento === "function") atualizarAvisosPreenchimento();
       if(!placaValida){
         if(placaEl) placaEl.reportValidity();
