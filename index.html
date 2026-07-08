@@ -941,7 +941,6 @@ body.auth-locked .auth-gate{display:flex;}
 .auth-form button:disabled{opacity:.65;cursor:wait;}
 .auth-status{min-height:18px;margin-top:12px;font-size:12px;font-weight:850;color:#9db7d2;line-height:1.35;}
 .auth-status.ok{color:#22d47e;}.auth-status.bad{color:#f05252;}
-body.patio-role .gestor-name-field{display:none!important;}
 body.user-avaliador #btnGestor,
 body.user-avaliador .gestor-portal-only{display:none!important;}
 body.user-avaliador .role-toggle{justify-content:flex-end;}
@@ -1051,7 +1050,15 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
         </div>
         <div class="field gestor-name-field">
           <label>Gestor SM</label>
-          <input id="gestorNome" type="text" placeholder="Nome do gestor" autocomplete="name">
+          <input id="gestorNome" type="text" list="gestoresSugeridos" placeholder="Selecione ou digite" autocomplete="off">
+          <datalist id="gestoresSugeridos">
+            <option value="Jonato"></option>
+            <option value="Marcel"></option>
+            <option value="Ritieri"></option>
+            <option value="Luan"></option>
+            <option value="Adriano"></option>
+            <option value="Cassio"></option>
+          </datalist>
         </div>
       </div>
     </div>
