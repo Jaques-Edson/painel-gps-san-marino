@@ -2221,7 +2221,37 @@ if($("dataAbertura") && !$("dataAbertura").value){
     }
     return h;
   }
-  async function request(path, options){
+  function erroSessaoExpirada(msg){
+    return /jwt expired|invalid jwt|expired/i.test(String(msg || ""));
+  }
+  async function renovarSessao(silencioso){
+    if(!portalSession || !portalSession.refresh_token) return false;
+    try{
+      const res = await fetch(SUPABASE_URL + "/auth/v1/token?grant_type=refresh_token", {
+        method:"POST",
+        headers:{
+          "apikey": SUPABASE_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ refresh_token: portalSession.refresh_token })
+      });
+      const text = await res.text();
+      let body = null;
+      if(text){
+        try{ body = JSON.parse(text); }catch(e){ body = text; }
+      }
+      if(!res.ok) throw new Error(body && (body.msg || body.message || body.error_description) ? (body.msg || body.message || body.error_description) : "Sessao expirada");
+      portalSession = body;
+      salvarSessaoLocal();
+      return true;
+    }catch(e){
+      limparSessaoLocal();
+      atualizarAuthUi();
+      if(!silencioso) setStatus("Sua sessao expirou. Entre novamente para salvar.", "bad");
+      return false;
+    }
+  }
+  async function request(path, options, tentouRenovar){
     const res = await fetch(SUPABASE_URL + path, options || {});
     let body = null;
     const text = await res.text();
@@ -2230,6 +2260,16 @@ if($("dataAbertura") && !$("dataAbertura").value){
     }
     if(!res.ok){
       const msg = body && (body.msg || body.message || body.error_description || body.hint) ? (body.msg || body.message || body.error_description || body.hint) : ("Erro " + res.status);
+      if(erroSessaoExpirada(msg)){
+        if(!tentouRenovar && await renovarSessao(true)){
+          const novasOpcoes = Object.assign({}, options || {});
+          novasOpcoes.headers = authHeaders(novasOpcoes.headers || {});
+          return request(path, novasOpcoes, true);
+        }
+        limparSessaoLocal();
+        atualizarAuthUi();
+        throw new Error("Sua sessao expirou. Entre novamente para salvar.");
+      }
       throw new Error(msg);
     }
     return body;
