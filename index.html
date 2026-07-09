@@ -901,6 +901,32 @@ body.light-view .class-box.active{
   .actions-panel .action-png{max-width:none;width:100%;}
 }
 
+/* OBSERVACOES */
+.obs-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(2,8,18,.72);backdrop-filter:blur(5px);}
+.obs-modal.open{display:flex;}
+.obs-card{width:min(720px,100%);max-height:min(84vh,720px);display:flex;flex-direction:column;gap:10px;border:1px solid rgba(37,215,243,.34);border-radius:14px;background:linear-gradient(145deg,#07182a,#03101f);box-shadow:0 24px 70px rgba(0,0,0,.55);padding:14px;}
+.obs-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.obs-title{font-size:13px;font-weight:950;text-transform:uppercase;letter-spacing:1px;color:#25d7f3;}
+.obs-close{width:34px;height:34px;border:1px solid rgba(255,255,255,.16);border-radius:8px;background:rgba(255,255,255,.06);color:#f0f4ff;font-size:18px;font-weight:950;cursor:pointer;}
+.obs-list{min-height:90px;max-height:260px;overflow:auto;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:rgba(2,8,18,.54);padding:8px;display:grid;gap:7px;}
+.obs-empty{font-size:11px;font-weight:850;color:#9db7d2;padding:8px;}
+.obs-item{border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.045);padding:8px;}
+.obs-meta{font-size:9px;font-weight:900;color:#9db7d2;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;line-height:1.25;}
+.obs-text{font-size:12px;font-weight:800;color:#f0f4ff;line-height:1.35;white-space:pre-wrap;word-break:break-word;}
+.obs-input-wrap{display:grid;gap:8px;}
+.obs-input-wrap textarea{width:100%;min-height:92px;resize:vertical;border:1px solid rgba(143,168,192,.34);border-radius:9px;background:rgba(2,8,18,.92);color:#f0f4ff;padding:10px;font-size:13px;font-weight:750;outline:none;}
+.obs-input-wrap textarea:focus{border-color:#25d7f3;box-shadow:0 0 0 3px rgba(37,215,243,.14);}
+.obs-actions{display:grid;grid-template-columns:46px 1fr;gap:8px;}
+.obs-mic{min-height:40px;border:1px solid rgba(37,215,243,.36);border-radius:8px;background:rgba(37,215,243,.09);color:#25d7f3;font-size:18px;font-weight:950;cursor:pointer;}
+.obs-mic.recording{background:#f05252;color:#fff;border-color:#ff8a8a;animation:savePulse 1.2s ease-in-out infinite;}
+.obs-save{min-height:40px;border:0;border-radius:8px;background:linear-gradient(135deg,#25d7f3,#1787bc);color:#04101e;font-size:12px;font-weight:950;cursor:pointer;}
+.obs-help{font-size:10px;font-weight:800;color:#9db7d2;line-height:1.3;}
+body.patio-role .obs-card{background:#fffdf7;color:#10243a;border-color:#c9bfa6;}
+body.patio-role .obs-title{color:#0b87a3;}
+body.patio-role .obs-close,body.patio-role .obs-list,body.patio-role .obs-input-wrap textarea{background:#fff;color:#10243a;border-color:#c9bfa6;}
+body.patio-role .obs-item{background:#fff;border-color:#d8ceb7;}
+body.patio-role .obs-text{color:#10243a;}
+@media(max-width:560px){.obs-card{max-height:90vh;padding:11px}.obs-actions{grid-template-columns:42px 1fr}.obs-list{max-height:210px}}
 /* ACESSO INICIAL OBRIGATORIO */
 body.auth-locked .topbar,
 body.auth-locked .body,
@@ -1208,6 +1234,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
         <button type="button" class="portal-btn subtle" id="portalNewPatioBtn">Nova avalia&ccedil;&atilde;o / limpar</button>
         <button type="button" class="portal-btn subtle" id="portalLogoutPatioBtn">Sair</button>
       </div>
+      <button type="button" class="portal-btn subtle" id="portalObsPatioBtn">Observa&ccedil;&otilde;es</button>
       <div class="portal-status" id="portalStatusPatio" aria-live="polite"></div>
     </div></div>
   <!-- DIREITO -->
@@ -1299,6 +1326,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
           <button type="button" class="portal-btn subtle" id="portalNewBtn">Nova avalia&ccedil;&atilde;o / limpar</button>
           <button type="button" class="portal-btn subtle" id="portalLogoutBtn">Sair do portal</button>
         </div>
+        <button type="button" class="portal-btn subtle" id="portalObsBtn">Observa&ccedil;&otilde;es</button>
         <div class="portal-recebimento gestor-portal-only">
           <div class="portal-recebimento-label">Recebimento estoque SM</div>
           <input id="dataRecebimento" type="hidden">
@@ -1314,6 +1342,23 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
 
     <div class="credito" id="creditoLeft">Elaborado por Edson Jaques</div>
 
+  </div>
+</div>
+<div class="obs-modal" id="obsModal" aria-hidden="true">
+  <div class="obs-card" role="dialog" aria-modal="true" aria-labelledby="obsTitle">
+    <div class="obs-head">
+      <div class="obs-title" id="obsTitle">Observa&ccedil;&otilde;es da avalia&ccedil;&atilde;o</div>
+      <button type="button" class="obs-close" id="obsCloseBtn" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="obs-list" id="obsList"></div>
+    <div class="obs-input-wrap">
+      <textarea id="obsTexto" placeholder="Digite uma observa&ccedil;&atilde;o"></textarea>
+      <div class="obs-actions">
+        <button type="button" class="obs-mic" id="obsMicBtn" title="Ditado por voz">&#127908;</button>
+        <button type="button" class="obs-save" id="obsAddBtn">Adicionar observa&ccedil;&atilde;o</button>
+      </div>
+      <div class="obs-help" id="obsHelp">O microfone depende da permiss&atilde;o e compatibilidade do navegador.</div>
+    </div>
   </div>
 </div>
 <!-- EXPORT OCULTO -->
@@ -2183,6 +2228,9 @@ if($("dataAbertura") && !$("dataAbertura").value){
   let autoSaveTimer = null;
   let autoSaveAssinatura = "";
   let autoSaveEmCurso = false;
+  let observacoesPortal = [];
+  let reconhecimentoVoz = null;
+  let ouvindoVoz = false;
   const AUTO_SAVE_DELAY = 4500;
 
   const qs = (sel) => document.querySelector(sel);
@@ -2326,6 +2374,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
     dados.perfil = getRadio("perfil");
     dados.classificacao = getRadio("classificacao");
     dados.papelVisual = document.body.classList.contains("patio-role") ? "patio" : "gestor";
+    dados.observacoes = observacoesPortal;
     return JSON.stringify(dados);
   }
   function coletarDados(){
@@ -2362,6 +2411,8 @@ if($("dataAbertura") && !$("dataAbertura").value){
     if(dados.papelVisual && window.portalPerfilPapel !== "avaliador" && typeof window.aplicarPapelOperacional === "function"){
       window.aplicarPapelOperacional(dados.papelVisual);
     }
+    observacoesPortal = Array.isArray(dados.observacoes) ? dados.observacoes : [];
+    renderizarObservacoes();
     if(typeof calc === "function") calc();
   }
   function atualizarUi(){
@@ -2489,6 +2540,74 @@ if($("dataAbertura") && !$("dataAbertura").value){
       .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
       .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
   }
+  function nomePerfilAtual(){
+    return portalPerfil && portalPerfil.papel ? String(portalPerfil.papel) : "usuario";
+  }
+  function formatarDataHoraObs(iso){
+    try{ return new Date(iso).toLocaleString("pt-BR"); }catch(e){ return "sem data"; }
+  }
+  function renderizarObservacoes(){
+    const lista = byId("obsList");
+    if(!lista) return;
+    const itens = Array.isArray(observacoesPortal) ? observacoesPortal : [];
+    if(!itens.length){
+      lista.innerHTML = '<div class="obs-empty">Nenhuma observa&ccedil;&atilde;o registrada.</div>';
+      return;
+    }
+    lista.innerHTML = itens.slice().reverse().map(obs => {
+      const meta = [obs.email || "usuario", obs.perfil || "perfil", formatarDataHoraObs(obs.criadoEm)].filter(Boolean).join(" | ");
+      return '<div class="obs-item"><div class="obs-meta">' + escapeHtml(meta) + '</div><div class="obs-text">' + escapeHtml(obs.texto || "") + '</div></div>';
+    }).join("");
+  }
+  function abrirObservacoes(){
+    if(!portalSession || !portalSession.user){ setStatus("Entre no portal para registrar observacoes.", "bad"); return; }
+    renderizarObservacoes();
+    const modal = byId("obsModal");
+    if(modal){ modal.classList.add("open"); modal.setAttribute("aria-hidden","false"); }
+    setTimeout(() => byId("obsTexto") && byId("obsTexto").focus(), 80);
+  }
+  function fecharObservacoes(){
+    const modal = byId("obsModal");
+    if(modal){ modal.classList.remove("open"); modal.setAttribute("aria-hidden","true"); }
+    if(ouvindoVoz && reconhecimentoVoz){ try{ reconhecimentoVoz.stop(); }catch(e){} }
+  }
+  function adicionarObservacao(){
+    const campo = byId("obsTexto");
+    const texto = campo ? String(campo.value || "").trim() : "";
+    if(!texto){ setStatus("Digite uma observacao antes de adicionar.", "bad"); return; }
+    if(!portalSession || !portalSession.user){ setStatus("Entre no portal para registrar observacoes.", "bad"); return; }
+    observacoesPortal.push({
+      texto:texto,
+      criadoEm:new Date().toISOString(),
+      email:portalSession.user.email || "",
+      usuarioId:portalSession.user.id || "",
+      perfil:nomePerfilAtual(),
+      origem:document.body.classList.contains("patio-role") ? "avaliador" : "gestor"
+    });
+    if(campo) campo.value = "";
+    renderizarObservacoes();
+    agendarAutoSave();
+    setStatus(avaliacaoAtual && (avaliacaoAtual.id || avaliacaoAtual.codigo) ? "Observacao adicionada. Salvamento automatico em instantes." : "Observacao adicionada. Clique em Salvar avaliacao online para gravar.", "ok");
+  }
+  function alternarVozObservacao(){
+    const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const btn = byId("obsMicBtn");
+    const campo = byId("obsTexto");
+    if(!Speech){ setStatus("Microfone por voz nao disponivel neste navegador.", "bad"); return; }
+    if(ouvindoVoz && reconhecimentoVoz){ try{ reconhecimentoVoz.stop(); }catch(e){} return; }
+    reconhecimentoVoz = new Speech();
+    reconhecimentoVoz.lang = "pt-BR";
+    reconhecimentoVoz.interimResults = false;
+    reconhecimentoVoz.continuous = false;
+    reconhecimentoVoz.onstart = () => { ouvindoVoz = true; if(btn) btn.classList.add("recording"); setStatus("Ouvindo observacao...", ""); };
+    reconhecimentoVoz.onend = () => { ouvindoVoz = false; if(btn) btn.classList.remove("recording"); };
+    reconhecimentoVoz.onerror = () => { ouvindoVoz = false; if(btn) btn.classList.remove("recording"); setStatus("Nao consegui usar o microfone neste navegador.", "bad"); };
+    reconhecimentoVoz.onresult = ev => {
+      const texto = Array.from(ev.results || []).map(r => r[0] && r[0].transcript ? r[0].transcript : "").join(" ").trim();
+      if(texto && campo) campo.value = (campo.value ? campo.value + " " : "") + texto;
+    };
+    try{ reconhecimentoVoz.start(); }catch(e){ setStatus("Nao consegui iniciar o microfone.", "bad"); }
+  }
   function valorXls(valor){
     return String(valor == null ? "" : valor)
       .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -2554,6 +2673,8 @@ if($("dataAbertura") && !$("dataAbertura").value){
     const lista = byId("portalList");
     if(lista){ lista.innerHTML = ""; lista.style.display = "none"; }
     portalAvaliacoesLista = [];
+    observacoesPortal = [];
+    renderizarObservacoes();
     autoSaveAssinatura = "";
     clearTimeout(autoSaveTimer);
     atualizarTravaAvaliacaoAvaliador();
@@ -2686,11 +2807,18 @@ if($("dataAbertura") && !$("dataAbertura").value){
     byId("portalSavePatioBtn")?.addEventListener("click", salvarPortal);
     byId("portalNewPatioBtn")?.addEventListener("click", novaAvaliacao);
     byId("portalLogoutPatioBtn")?.addEventListener("click", sairPortal);
+    byId("portalObsPatioBtn")?.addEventListener("click", abrirObservacoes);
     byId("portalCopyBtn")?.addEventListener("click", copiarLink);
     byId("portalListBtn")?.addEventListener("click", listarAvaliacoes);
     byId("portalNewBtn")?.addEventListener("click", novaAvaliacao);
     byId("portalXlsBtn")?.addEventListener("click", exportarAvaliacoesXls);
     byId("portalLogoutBtn")?.addEventListener("click", sairPortal);
+    byId("portalObsBtn")?.addEventListener("click", abrirObservacoes);
+    byId("obsCloseBtn")?.addEventListener("click", fecharObservacoes);
+    byId("obsAddBtn")?.addEventListener("click", adicionarObservacao);
+    byId("obsMicBtn")?.addEventListener("click", alternarVozObservacao);
+    byId("obsModal")?.addEventListener("click", ev => { if(ev.target && ev.target.id === "obsModal") fecharObservacoes(); });
+    document.addEventListener("keydown", ev => { if(ev.key === "Escape") fecharObservacoes(); });
     ativarAutoSaveCampos();
     atualizarUi();
     if(portalSession && portalSession.access_token){
