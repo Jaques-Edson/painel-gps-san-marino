@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#04101e"/>
 <title>GPS — Guia de Precificação Seminovos</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html{height:100%;background:#04101e;-webkit-text-size-adjust:100%}
@@ -2210,9 +2211,12 @@ if($("dataAbertura") && !$("dataAbertura").value){
 
 // -- PORTAL ONLINE SUPABASE: login, salvar, carregar link e historico --
 (function(){
-  const SUPABASE_URL = "https://dtcdcdjoyesxhjquljyq.supabase.co";
+  const SUPABASE_URL = "https://szctrdisnsxuvlsldgpi.supabase.co";
   const PUBLIC_APP_URL = "https://jaques-edson.github.io/painel-gps-san-marino/";
-  const SUPABASE_KEY = "sb_publishable_vZOGEU-jtEj-lWBwI_Owtg_GcEO9TNn";
+  const SUPABASE_KEY = "sb_publishable_QxnpNCaV2KZ5q5sn61Y_Ag_CywAFsQB";
+  const supabaseClient = window.supabase && window.supabase.createClient
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+    : null;
   const SESSION_KEY = "gps-supabase-session";
   const AVALIACAO_KEY = "gps-avaliacao-atual";
   const CAMPOS_PORTAL = [
@@ -2466,17 +2470,19 @@ if($("dataAbertura") && !$("dataAbertura").value){
   }
   async function loginPortal(){
     const btn = byId("authLoginBtn") || byId("portalLoginBtn");
-    const email = ((byId("authEmail") && byId("authEmail").value) || (byId("portalEmail") && byId("portalEmail").value) || "").trim();
-    const senha = ((byId("authSenha") && byId("authSenha").value) || (byId("portalSenha") && byId("portalSenha").value) || "").trim();
+    const email = ((byId("authEmail") && byId("authEmail").value) || (byId("portalEmail") && byId("portalEmail").value) || "").trim().toLowerCase();
+    const senha = ((byId("authSenha") && byId("authSenha").value) || (byId("portalSenha") && byId("portalSenha").value) || "");
     if(!email || !senha){ setStatus("Informe e-mail e senha.", "bad"); return; }
     setBusy(btn, true, "Entrando...");
     try{
-      const data = await request("/auth/v1/token?grant_type=password", {
-        method:"POST",
-        headers: authHeaders(),
-        body: JSON.stringify({ email:email, password:senha })
+      if(!supabaseClient) throw Object.assign(new Error("Biblioteca de autenticacao nao carregada."), { tipo:"config" });
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password: senha
       });
-      portalSession = data;
+      if(error) throw error;
+      if(!data || !data.session) throw Object.assign(new Error("Sessao nao retornada pelo Supabase."), { tipo:"config" });
+      portalSession = data.session;
       salvarSessaoLocal();
       await carregarPerfil();
       atualizarUi();
@@ -2485,7 +2491,19 @@ if($("dataAbertura") && !$("dataAbertura").value){
     }catch(e){
       limparSessaoLocal();
       atualizarUi();
-      setStatus("Falha no login: " + e.message, "bad");
+      const msg = String(e && e.message || "");
+      const status = Number(e && e.status || 0);
+      let mensagem = "Nao foi possivel entrar. Tente novamente.";
+      if(/invalid login credentials|invalid credentials/i.test(msg)){
+        mensagem = "E-mail ou senha invalidos.";
+      }else if((e && e.tipo === "config") || status === 401 || status === 403 || /invalid api key|no api key|biblioteca de autenticacao|sessao nao retornada/i.test(msg)){
+        mensagem = "Configuracao de autenticacao invalida. Contate o administrador.";
+      }else if(status >= 500 || status === 429 || /service unavailable|temporarily unavailable|upstream/i.test(msg)){
+        mensagem = "Supabase indisponivel no momento. Tente novamente em alguns minutos.";
+      }else if(e instanceof TypeError || /failed to fetch|networkerror|network request failed|load failed/i.test(msg)){
+        mensagem = "Erro de rede. Verifique sua conexao e tente novamente.";
+      }
+      setStatus(mensagem, "bad");
     }finally{
       setBusy(btn, false);
     }
