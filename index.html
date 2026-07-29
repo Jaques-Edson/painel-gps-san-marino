@@ -2532,10 +2532,15 @@ if($("dataAbertura") && !$("dataAbertura").value){
   async function carregarPerfil(){
     if(!portalSession || !portalSession.user) return;
     const uid = encodeURIComponent(portalSession.user.id);
-    const rows = await request("/rest/v1/usuarios_perfis?user_id=eq." + uid + "&select=*", {
+    const rows = await request("/rest/v1/profiles?id=eq." + uid + "&select=id,full_name,email,role,active", {
       headers: authHeaders()
     });
-    portalPerfil = rows && rows[0] ? rows[0] : { papel:"avaliador" };
+    const profileRow = rows && rows[0];
+    if(!profileRow) throw new Error("Perfil de acesso nao encontrado.");
+    if(profileRow.active === false) throw new Error("Usuario desativado. Procure o administrador.");
+    portalPerfil = Object.assign({}, profileRow, {
+      papel: ["super_admin","manager"].includes(String(profileRow.role || "").toLowerCase()) ? "gestor" : "avaliador"
+    });
     aplicarPermissao();
   }
   async function loginPortal(){
