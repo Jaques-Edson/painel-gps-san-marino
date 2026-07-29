@@ -959,6 +959,7 @@ body.auth-locked .auth-gate{display:flex;}
 .auth-kicker{font-size:10px;font-weight:950;letter-spacing:2px;color:#25d7f3;text-transform:uppercase;margin-bottom:5px;}
 .auth-sub{font-size:13px;color:#c8d8e8;font-weight:800;margin-top:7px;line-height:1.32;}
 .auth-form{display:grid;gap:11px;}
+.auth-form[hidden]{display:none!important;}
 .auth-form input{height:48px;border:1px solid rgba(143,168,192,.32);border-radius:10px;background:rgba(2,8,18,.92);color:#f0f4ff;padding:0 14px;font-size:15px;font-weight:800;min-width:0;outline:none;}
 .auth-form input:focus{border-color:#25d7f3;box-shadow:0 0 0 3px rgba(37,215,243,.16);}
 .auth-form button{height:50px;border:0;border-radius:10px;background:linear-gradient(135deg,#25d7f3,#0891b2);color:#020814;font-weight:950;font-size:16px;cursor:pointer;box-shadow:0 14px 30px rgba(8,145,178,.22);}
@@ -1024,10 +1025,15 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
         <div class="auth-sub">Entre para abrir automaticamente a visao do seu perfil.</div>
       </div>
     </div>
-    <div class="auth-form">
+    <div class="auth-form" id="authLoginForm">
       <input id="authEmail" type="email" autocomplete="username" placeholder="E-mail do usuario">
       <input id="authSenha" type="password" autocomplete="current-password" placeholder="Senha">
       <button type="button" id="authLoginBtn">Entrar</button>
+    </div>
+    <div class="auth-form" id="authRecoveryForm" hidden>
+      <input id="authNovaSenha" type="password" minlength="8" autocomplete="new-password" placeholder="Nova senha (minimo de 8 caracteres)">
+      <input id="authConfirmarSenha" type="password" minlength="8" autocomplete="new-password" placeholder="Confirme a nova senha">
+      <button type="button" id="authSavePasswordBtn">Salvar nova senha</button>
     </div>
     <div class="auth-status" id="authStatus" aria-live="polite"></div>
   </div>
@@ -2263,6 +2269,70 @@ if($("dataAbertura") && !$("dataAbertura").value){
       btn.disabled = false;
     }
   }
+  function recuperacaoNaUrl(){
+    const params = new URLSearchParams(location.search);
+    return params.get("type") === "recovery" || location.hash.includes("type=recovery");
+  }
+  function exibirRecuperacaoSenha(){
+    document.body.classList.add("auth-locked");
+    const loginForm = byId("authLoginForm");
+    const recoveryForm = byId("authRecoveryForm");
+    if(loginForm) loginForm.hidden = true;
+    if(recoveryForm) recoveryForm.hidden = false;
+    const title = qs(".auth-title");
+    const sub = qs(".auth-sub");
+    if(title) title.textContent = "Criar nova senha";
+    if(sub) sub.textContent = "Digite e confirme a nova senha para concluir a recuperacao.";
+    setStatus("O link foi validado. Cadastre sua nova senha.", "");
+  }
+  function exibirLoginSenhaAtualizada(){
+    const loginForm = byId("authLoginForm");
+    const recoveryForm = byId("authRecoveryForm");
+    if(loginForm) loginForm.hidden = false;
+    if(recoveryForm) recoveryForm.hidden = true;
+    const title = qs(".auth-title");
+    const sub = qs(".auth-sub");
+    if(title) title.textContent = "Acesso GPS";
+    if(sub) sub.textContent = "Entre para abrir automaticamente a visao do seu perfil.";
+    byId("authSenha").value = "";
+    setStatus("Senha atualizada. Entre com a nova senha.", "ok");
+  }
+  async function salvarNovaSenha(){
+    const btn = byId("authSavePasswordBtn");
+    const password = byId("authNovaSenha").value;
+    const confirmation = byId("authConfirmarSenha").value;
+    if(password.length < 8){
+      setStatus("A nova senha deve ter pelo menos 8 caracteres.", "bad");
+      return;
+    }
+    if(password !== confirmation){
+      setStatus("As senhas nao conferem.", "bad");
+      return;
+    }
+    setBusy(btn, true, "Salvando...");
+    try{
+      if(!supabaseClient) throw new Error("Biblioteca de autenticacao nao carregada.");
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      if(error) throw error;
+      byId("authNovaSenha").value = "";
+      byId("authConfirmarSenha").value = "";
+      history.replaceState({}, document.title, location.pathname);
+      await supabaseClient.auth.signOut();
+      limparSessaoLocal();
+      exibirLoginSenhaAtualizada();
+    }catch(e){
+      const msg = String(e && e.message || "");
+      if(/session|token|expired|invalid/i.test(msg)){
+        setStatus("Este link expirou ou ja foi usado. Solicite uma nova recuperacao.", "bad");
+      }else if(e instanceof TypeError || /failed to fetch|network/i.test(msg)){
+        setStatus("Erro de rede. Verifique sua conexao e tente novamente.", "bad");
+      }else{
+        setStatus("Nao foi possivel atualizar a senha. Tente novamente.", "bad");
+      }
+    }finally{
+      setBusy(btn, false);
+    }
+  }
   function authHeaders(extra){
     const h = Object.assign({
       "apikey": SUPABASE_KEY,
@@ -2819,7 +2889,9 @@ if($("dataAbertura") && !$("dataAbertura").value){
     lerSessaoLocal();
     byId("portalLoginBtn")?.addEventListener("click", loginPortal);
     byId("authLoginBtn")?.addEventListener("click", loginPortal);
+    byId("authSavePasswordBtn")?.addEventListener("click", salvarNovaSenha);
     [byId("authEmail"), byId("authSenha")].forEach(el => el && el.addEventListener("keydown", ev => { if(ev.key === "Enter") loginPortal(); }));
+    [byId("authNovaSenha"), byId("authConfirmarSenha")].forEach(el => el && el.addEventListener("keydown", ev => { if(ev.key === "Enter") salvarNovaSenha(); }));
     byId("portalBuscaPlaca")?.addEventListener("keydown", ev => { if(ev.key === "Enter") listarAvaliacoes(); });
     byId("portalSaveBtn")?.addEventListener("click", salvarPortal);
     byId("portalSavePatioBtn")?.addEventListener("click", salvarPortal);
@@ -2839,6 +2911,14 @@ if($("dataAbertura") && !$("dataAbertura").value){
     document.addEventListener("keydown", ev => { if(ev.key === "Escape") fecharObservacoes(); });
     ativarAutoSaveCampos();
     atualizarUi();
+    if(supabaseClient && recuperacaoNaUrl()){
+      const { data } = await supabaseClient.auth.getSession();
+      if(data && data.session){
+        portalSession = data.session;
+        exibirRecuperacaoSenha();
+        return;
+      }
+    }
     if(portalSession && portalSession.access_token){
       try{
         await carregarPerfil();
@@ -2853,6 +2933,14 @@ if($("dataAbertura") && !$("dataAbertura").value){
     }else if(codigoPendente){
       setStatus("Entre no portal para abrir esta avaliacao.", "");
     }
+  }
+  if(supabaseClient){
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if(event === "PASSWORD_RECOVERY"){
+        portalSession = session;
+        exibirRecuperacaoSenha();
+      }
+    });
   }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciarPortal);
   else iniciarPortal();
