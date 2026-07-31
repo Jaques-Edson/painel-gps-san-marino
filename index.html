@@ -2875,7 +2875,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
     const option = select.options[select.selectedIndex];
     return { id:select.value, email:option.dataset.email || "", active:option.dataset.active !== "false" };
   }
-  async function invocarAdmin(action, payload){
+  async function invocarAdmin(action, payload, tentouRenovar){
     if(!portalSession || !portalSession.access_token) throw new Error("Sessao expirada. Entre novamente.");
     if(String(portalSession.user && portalSession.user.email || "").toLowerCase() !== ADMIN_EMAIL) throw new Error("Acesso exclusivo do administrador.");
     const res = await fetch(SUPABASE_URL + "/functions/v1/manage-user", {
@@ -2886,6 +2886,15 @@ if($("dataAbertura") && !$("dataAbertura").value){
     const text = await res.text();
     let body = {};
     try{ body = text ? JSON.parse(text) : {}; }catch(e){ body = {error:text}; }
+    if(res.status === 401 && !tentouRenovar && portalSession && portalSession.refresh_token){
+      const renovou = await renovarSessao(true);
+      if(renovou) return invocarAdmin(action, payload, true);
+    }
+    if(res.status === 401){
+      limparSessaoLocal();
+      atualizarUi();
+      throw new Error("Sua sessao expirou. Entre novamente.");
+    }
     if(!res.ok) throw new Error(body.error || body.message || "Falha na administracao de usuarios.");
     return body;
   }
