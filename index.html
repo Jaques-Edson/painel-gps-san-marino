@@ -674,6 +674,17 @@ body.patio-role::after{background:#fff;color:#475569;border-color:#c9bfa6;}
   body.patio-role::after{position:static;display:block;margin:8px 10px 12px;text-align:center;}
 }
 
+.admin-user-panel{display:grid;gap:10px;margin-top:10px;padding:12px;border:1px solid rgba(255,215,0,.32);border-radius:10px;background:rgba(255,215,0,.055);}
+.admin-user-panel[hidden]{display:none!important;}
+.admin-user-title{color:#ffd700;font-size:13px;font-weight:950;text-transform:uppercase;letter-spacing:.5px;}
+.admin-user-help{color:#9db7d2;font-size:10px;font-weight:750;line-height:1.35;}
+.admin-user-grid{display:grid;grid-template-columns:1fr;gap:7px;}
+.admin-user-grid input,.admin-user-grid select{height:38px;border:1px solid rgba(143,168,192,.3);border-radius:8px;background:#061326;color:#f0f4ff;padding:0 10px;font-size:12px;font-weight:800;min-width:0;}
+.admin-user-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.admin-danger{background:linear-gradient(135deg,#ef4444,#b91c1c)!important;color:#fff!important;}
+.admin-user-status{min-height:16px;font-size:11px;font-weight:850;color:#9db7d2;}
+.admin-user-status.ok{color:#22d47e}.admin-user-status.bad{color:#f05252}
+@media(min-width:700px){.admin-user-grid.cols-3{grid-template-columns:1.2fr 1.4fr 1fr}.admin-user-grid.cols-2{grid-template-columns:1.5fr 1fr}}
 .admin-hidden{display:none!important;}
 
 /* AJUSTES EDSON — DATA, SELEÇÃO E LEITURA DO PAINEL DIREITO */
@@ -1030,11 +1041,6 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
       <input id="authSenha" type="password" autocomplete="current-password" placeholder="Senha">
       <button type="button" id="authLoginBtn">Entrar</button>
     </div>
-    <div class="auth-form" id="authRecoveryForm" hidden>
-      <input id="authNovaSenha" type="password" minlength="8" autocomplete="new-password" placeholder="Nova senha (minimo de 8 caracteres)">
-      <input id="authConfirmarSenha" type="password" minlength="8" autocomplete="new-password" placeholder="Confirme a nova senha">
-      <button type="button" id="authSavePasswordBtn">Salvar nova senha</button>
-    </div>
     <div class="auth-status" id="authStatus" aria-live="polite"></div>
   </div>
 </div>
@@ -1339,7 +1345,35 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
           <input id="dataRecebimento" type="hidden">
           <button type="button" class="portal-btn subtle" id="registrarRecebimentoBtn">Registrar</button>
         </div>
-        <div class="portal-link" id="portalLink"></div>
+        <div class="admin-user-panel" id="adminUserPanel" hidden>
+          <div class="admin-user-title">Administracao de usuarios</div>
+          <div class="admin-user-help">Acesso exclusivo de edson@sanmarinofiat.com.br. Novos usuarios sao criados sem envio de e-mail.</div>
+          <div class="admin-user-grid cols-3">
+            <input id="adminNewName" type="text" autocomplete="off" placeholder="Nome completo">
+            <input id="adminNewEmail" type="email" autocomplete="off" placeholder="E-mail do novo usuario">
+            <select id="adminNewRole" aria-label="Perfil do novo usuario"><option value="evaluator">Avaliador</option><option value="manager">Gestor</option></select>
+          </div>
+          <div class="admin-user-grid cols-2">
+            <input id="adminNewPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Senha inicial (minimo 8 caracteres)">
+            <button type="button" class="portal-btn" id="adminCreateUserBtn">Criar usuario</button>
+          </div>
+          <div class="admin-user-grid cols-2">
+            <select id="adminUserSelect" aria-label="Usuario administrado"><option value="">Selecione um usuario</option></select>
+            <button type="button" class="portal-btn subtle" id="adminRefreshUsersBtn">Atualizar lista</button>
+          </div>
+          <div class="admin-user-grid cols-2">
+            <input id="adminUserPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Definir nova senha">
+            <button type="button" class="portal-btn" id="adminSetPasswordBtn">Alterar senha</button>
+          </div>          <div class="admin-user-grid cols-2">
+            <select id="adminEditRole" aria-label="Novo perfil do usuario"><option value="evaluator">Avaliador</option><option value="manager">Gestor</option></select>
+            <button type="button" class="portal-btn subtle" id="adminSetRoleBtn">Alterar perfil</button>
+          </div>
+          <div class="admin-user-actions">
+            <button type="button" class="portal-btn subtle" id="adminToggleUserBtn">Ativar / desativar</button>
+            <button type="button" class="portal-btn admin-danger" id="adminDeleteUserBtn">Excluir usuario</button>
+          </div>
+          <div class="admin-user-status" id="adminUserStatus" aria-live="polite"></div>
+        </div>        <div class="portal-link" id="portalLink"></div>
         <div class="portal-row gestor-portal-only"><input id="portalBuscaPlaca" type="text" placeholder="Buscar por placa" style="text-transform:uppercase;"></div>
         <div class="portal-list" id="portalList"></div>
       </div>
@@ -2220,6 +2254,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
   const SUPABASE_URL = "https://szctrdisnsxuvlsldgpi.supabase.co";
   const PUBLIC_APP_URL = "https://jaques-edson.github.io/painel-gps-san-marino/";
   const SUPABASE_KEY = "sb_publishable_QxnpNCaV2KZ5q5sn61Y_Ag_CywAFsQB";
+  const ADMIN_EMAIL = "edson@sanmarinofiat.com.br";
   const supabaseClient = window.supabase && window.supabase.createClient
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
     : null;
@@ -2267,70 +2302,6 @@ if($("dataAbertura") && !$("dataAbertura").value){
     }else{
       btn.textContent = btn.dataset.portalText || btn.textContent;
       btn.disabled = false;
-    }
-  }
-  function recuperacaoNaUrl(){
-    const params = new URLSearchParams(location.search);
-    return params.get("type") === "recovery" || location.hash.includes("type=recovery");
-  }
-  function exibirRecuperacaoSenha(){
-    document.body.classList.add("auth-locked");
-    const loginForm = byId("authLoginForm");
-    const recoveryForm = byId("authRecoveryForm");
-    if(loginForm) loginForm.hidden = true;
-    if(recoveryForm) recoveryForm.hidden = false;
-    const title = qs(".auth-title");
-    const sub = qs(".auth-sub");
-    if(title) title.textContent = "Criar nova senha";
-    if(sub) sub.textContent = "Digite e confirme a nova senha para concluir a recuperacao.";
-    setStatus("O link foi validado. Cadastre sua nova senha.", "");
-  }
-  function exibirLoginSenhaAtualizada(){
-    const loginForm = byId("authLoginForm");
-    const recoveryForm = byId("authRecoveryForm");
-    if(loginForm) loginForm.hidden = false;
-    if(recoveryForm) recoveryForm.hidden = true;
-    const title = qs(".auth-title");
-    const sub = qs(".auth-sub");
-    if(title) title.textContent = "Acesso GPS";
-    if(sub) sub.textContent = "Entre para abrir automaticamente a visao do seu perfil.";
-    byId("authSenha").value = "";
-    setStatus("Senha atualizada. Entre com a nova senha.", "ok");
-  }
-  async function salvarNovaSenha(){
-    const btn = byId("authSavePasswordBtn");
-    const password = byId("authNovaSenha").value;
-    const confirmation = byId("authConfirmarSenha").value;
-    if(password.length < 8){
-      setStatus("A nova senha deve ter pelo menos 8 caracteres.", "bad");
-      return;
-    }
-    if(password !== confirmation){
-      setStatus("As senhas nao conferem.", "bad");
-      return;
-    }
-    setBusy(btn, true, "Salvando...");
-    try{
-      if(!supabaseClient) throw new Error("Biblioteca de autenticacao nao carregada.");
-      const { error } = await supabaseClient.auth.updateUser({ password });
-      if(error) throw error;
-      byId("authNovaSenha").value = "";
-      byId("authConfirmarSenha").value = "";
-      history.replaceState({}, document.title, location.pathname);
-      await supabaseClient.auth.signOut();
-      limparSessaoLocal();
-      exibirLoginSenhaAtualizada();
-    }catch(e){
-      const msg = String(e && e.message || "");
-      if(/session|token|expired|invalid/i.test(msg)){
-        setStatus("Este link expirou ou ja foi usado. Solicite uma nova recuperacao.", "bad");
-      }else if(e instanceof TypeError || /failed to fetch|network/i.test(msg)){
-        setStatus("Erro de rede. Verifique sua conexao e tente novamente.", "bad");
-      }else{
-        setStatus("Nao foi possivel atualizar a senha. Tente novamente.", "bad");
-      }
-    }finally{
-      setBusy(btn, false);
     }
   }
   function authHeaders(extra){
@@ -2495,7 +2466,9 @@ if($("dataAbertura") && !$("dataAbertura").value){
     const chip = byId("portalChip");
     const user = byId("portalUser");
     const linkEl = byId("portalLink");
+    const adminPanel = byId("adminUserPanel");
     const logged = !!(portalSession && portalSession.access_token);
+    const currentEmail = logged && portalSession.user ? String(portalSession.user.email || "").toLowerCase() : "";
     const papel = portalPerfil && portalPerfil.papel ? String(portalPerfil.papel).toLowerCase() : "";
     document.body.classList.toggle("auth-locked", !logged);
     document.body.classList.toggle("user-avaliador", logged && papel === "avaliador");
@@ -2504,6 +2477,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
     if(actions) actions.style.display = logged ? "flex" : "none";
     if(chip) chip.textContent = logged ? (portalPerfil && portalPerfil.papel ? portalPerfil.papel : "conectado") : "desconectado";
     if(user) user.textContent = logged ? ((portalSession.user && portalSession.user.email) || "Usuario") + (portalPerfil && portalPerfil.papel ? " - " + portalPerfil.papel : "") : "";
+    if(adminPanel) adminPanel.hidden = !(logged && currentEmail === ADMIN_EMAIL);
     if(linkEl) linkEl.textContent = linkAtual();
   }
   window.atualizarTravaAvaliacaoAvaliador = function atualizarTravaAvaliacaoAvaliador(){
@@ -2888,15 +2862,123 @@ if($("dataAbertura") && !$("dataAbertura").value){
       if(raw) avaliacaoAtual = JSON.parse(raw);
     }catch(e){}
   }
+  function setAdminStatus(msg, tipo){
+    const el = byId("adminUserStatus");
+    if(!el) return;
+    el.textContent = msg || "";
+    el.classList.toggle("ok", tipo === "ok");
+    el.classList.toggle("bad", tipo === "bad");
+  }
+  function usuarioAdminSelecionado(){
+    const select = byId("adminUserSelect");
+    if(!select || !select.value) return null;
+    const option = select.options[select.selectedIndex];
+    return { id:select.value, email:option.dataset.email || "", active:option.dataset.active !== "false" };
+  }
+  async function invocarAdmin(action, payload){
+    if(!portalSession || !portalSession.access_token) throw new Error("Sessao expirada. Entre novamente.");
+    if(String(portalSession.user && portalSession.user.email || "").toLowerCase() !== ADMIN_EMAIL) throw new Error("Acesso exclusivo do administrador.");
+    const res = await fetch(SUPABASE_URL + "/functions/v1/manage-user", {
+      method:"POST",
+      headers:authHeaders(),
+      body:JSON.stringify(Object.assign({action}, payload || {}))
+    });
+    const text = await res.text();
+    let body = {};
+    try{ body = text ? JSON.parse(text) : {}; }catch(e){ body = {error:text}; }
+    if(!res.ok) throw new Error(body.error || body.message || "Falha na administracao de usuarios.");
+    return body;
+  }
+  async function carregarUsuariosAdmin(){
+    const select = byId("adminUserSelect");
+    if(!select || byId("adminUserPanel")?.hidden) return;
+    setAdminStatus("Carregando usuarios...", "");
+    try{
+      const body = await invocarAdmin("list");
+      const users = Array.isArray(body.users) ? body.users : [];
+      select.innerHTML = '<option value="">Selecione um usuario</option>';
+      users.forEach(user => {
+        const option = document.createElement("option");
+        option.value = user.id;
+        option.dataset.email = user.email || "";
+        option.dataset.active = String(user.active !== false);
+        option.textContent = (user.full_name ? user.full_name + " - " : "") + (user.email || "Sem e-mail") + " [" + (user.role || "evaluator") + "]" + (user.active === false ? " - DESATIVADO" : "");
+        select.appendChild(option);
+      });
+      setAdminStatus(users.length + " usuario(s) carregado(s).", "ok");
+    }catch(e){ setAdminStatus(String(e.message || e), "bad"); }
+  }
+  async function criarUsuarioAdmin(){
+    const btn = byId("adminCreateUserBtn");
+    const full_name = byId("adminNewName").value.trim();
+    const email = byId("adminNewEmail").value.trim().toLowerCase();
+    const password = byId("adminNewPassword").value;
+    const role = byId("adminNewRole").value;
+    if(!full_name || !email){ setAdminStatus("Informe nome e e-mail.", "bad"); return; }
+    if(password.length < 8){ setAdminStatus("A senha inicial deve ter pelo menos 8 caracteres.", "bad"); return; }
+    setBusy(btn, true, "Criando...");
+    try{
+      await invocarAdmin("create", {full_name,email,password,role});
+      byId("adminNewName").value = ""; byId("adminNewEmail").value = ""; byId("adminNewPassword").value = "";
+      await carregarUsuariosAdmin();
+      setAdminStatus("Usuario criado e liberado sem envio de e-mail.", "ok");
+    }catch(e){ setAdminStatus(String(e.message || e), "bad"); }
+    finally{ setBusy(btn, false); }
+  }
+  async function alterarSenhaAdmin(){
+    const user = usuarioAdminSelecionado();
+    const password = byId("adminUserPassword").value;
+    if(!user){ setAdminStatus("Selecione um usuario.", "bad"); return; }
+    if(password.length < 8){ setAdminStatus("A nova senha deve ter pelo menos 8 caracteres.", "bad"); return; }
+    const btn = byId("adminSetPasswordBtn"); setBusy(btn, true, "Alterando...");
+    try{
+      await invocarAdmin("setPassword", {user_id:user.id,password});
+      byId("adminUserPassword").value = "";
+      setAdminStatus("Senha alterada. Nenhum e-mail foi enviado.", "ok");
+    }catch(e){ setAdminStatus(String(e.message || e), "bad"); }
+    finally{ setBusy(btn, false); }
+  }
+  async function alterarPerfilAdmin(){
+    const user = usuarioAdminSelecionado();
+    if(!user){ setAdminStatus("Selecione um usuario.", "bad"); return; }
+    if(user.email.toLowerCase() === ADMIN_EMAIL){ setAdminStatus("O perfil do administrador principal nao pode ser alterado.", "bad"); return; }
+    const role = byId("adminEditRole").value;
+    const btn = byId("adminSetRoleBtn"); setBusy(btn, true, "Alterando...");
+    try{ await invocarAdmin("setRole", {user_id:user.id,role}); await carregarUsuariosAdmin(); setAdminStatus("Perfil do usuario alterado.", "ok"); }
+    catch(e){ setAdminStatus(String(e.message || e), "bad"); }
+    finally{ setBusy(btn, false); }
+  }  async function alternarUsuarioAdmin(){
+    const user = usuarioAdminSelecionado();
+    if(!user){ setAdminStatus("Selecione um usuario.", "bad"); return; }
+    if(user.email.toLowerCase() === ADMIN_EMAIL){ setAdminStatus("O usuario administrador nao pode ser desativado.", "bad"); return; }
+    const btn = byId("adminToggleUserBtn"); setBusy(btn, true, "Salvando...");
+    try{ await invocarAdmin("setActive", {user_id:user.id,active:!user.active}); await carregarUsuariosAdmin(); }
+    catch(e){ setAdminStatus(String(e.message || e), "bad"); }
+    finally{ setBusy(btn, false); }
+  }
+  async function excluirUsuarioAdmin(){
+    const user = usuarioAdminSelecionado();
+    if(!user){ setAdminStatus("Selecione um usuario.", "bad"); return; }
+    if(user.email.toLowerCase() === ADMIN_EMAIL){ setAdminStatus("O usuario administrador nao pode ser excluido.", "bad"); return; }
+    if(!confirm("Excluir definitivamente o usuario " + user.email + "?")) return;
+    const btn = byId("adminDeleteUserBtn"); setBusy(btn, true, "Excluindo...");
+    try{ await invocarAdmin("delete", {user_id:user.id}); await carregarUsuariosAdmin(); setAdminStatus("Usuario excluido.", "ok"); }
+    catch(e){ setAdminStatus(String(e.message || e), "bad"); }
+    finally{ setBusy(btn, false); }
+  }
   async function iniciarPortal(){
     codigoPendente = codigoDaUrl();
     restaurarAvaliacaoLocal();
     lerSessaoLocal();
     byId("portalLoginBtn")?.addEventListener("click", loginPortal);
+    byId("adminCreateUserBtn")?.addEventListener("click", criarUsuarioAdmin);
+    byId("adminRefreshUsersBtn")?.addEventListener("click", carregarUsuariosAdmin);
+    byId("adminSetPasswordBtn")?.addEventListener("click", alterarSenhaAdmin);
+    byId("adminSetRoleBtn")?.addEventListener("click", alterarPerfilAdmin);
+    byId("adminToggleUserBtn")?.addEventListener("click", alternarUsuarioAdmin);
+    byId("adminDeleteUserBtn")?.addEventListener("click", excluirUsuarioAdmin);
     byId("authLoginBtn")?.addEventListener("click", loginPortal);
-    byId("authSavePasswordBtn")?.addEventListener("click", salvarNovaSenha);
     [byId("authEmail"), byId("authSenha")].forEach(el => el && el.addEventListener("keydown", ev => { if(ev.key === "Enter") loginPortal(); }));
-    [byId("authNovaSenha"), byId("authConfirmarSenha")].forEach(el => el && el.addEventListener("keydown", ev => { if(ev.key === "Enter") salvarNovaSenha(); }));
     byId("portalBuscaPlaca")?.addEventListener("keydown", ev => { if(ev.key === "Enter") listarAvaliacoes(); });
     byId("portalSaveBtn")?.addEventListener("click", salvarPortal);
     byId("portalSavePatioBtn")?.addEventListener("click", salvarPortal);
@@ -2916,14 +2998,6 @@ if($("dataAbertura") && !$("dataAbertura").value){
     document.addEventListener("keydown", ev => { if(ev.key === "Escape") fecharObservacoes(); });
     ativarAutoSaveCampos();
     atualizarUi();
-    if(supabaseClient && recuperacaoNaUrl()){
-      const { data } = await supabaseClient.auth.getSession();
-      if(data && data.session){
-        portalSession = data.session;
-        exibirRecuperacaoSenha();
-        return;
-      }
-    }
     if(portalSession && portalSession.access_token){
       try{
         await carregarPerfil();
@@ -2938,14 +3012,6 @@ if($("dataAbertura") && !$("dataAbertura").value){
     }else if(codigoPendente){
       setStatus("Entre no portal para abrir esta avaliacao.", "");
     }
-  }
-  if(supabaseClient){
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-      if(event === "PASSWORD_RECOVERY"){
-        portalSession = session;
-        exibirRecuperacaoSenha();
-      }
-    });
   }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciarPortal);
   else iniciarPortal();
