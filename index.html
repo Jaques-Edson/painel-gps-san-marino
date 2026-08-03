@@ -1335,6 +1335,8 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
           <button type="button" class="portal-btn subtle gestor-portal-only" id="portalListBtn">Ver avalia&ccedil;&otilde;es salvas</button>
           <button type="button" class="portal-btn xls gestor-portal-only" id="portalXlsBtn">Exportar XLS</button>
         </div>
+        <div class="portal-row gestor-portal-only"><input id="portalBuscaPlaca" type="text" placeholder="Buscar por placa" style="text-transform:uppercase;"></div>
+        <div class="portal-list" id="portalList"></div>
         <div class="portal-row two">
           <button type="button" class="portal-btn subtle" id="portalNewBtn">Nova avalia&ccedil;&atilde;o / limpar</button>
           <button type="button" class="portal-btn subtle" id="portalLogoutBtn">Sair do portal</button>
@@ -1374,8 +1376,6 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
           </div>
           <div class="admin-user-status" id="adminUserStatus" aria-live="polite"></div>
         </div>        <div class="portal-link" id="portalLink"></div>
-        <div class="portal-row gestor-portal-only"><input id="portalBuscaPlaca" type="text" placeholder="Buscar por placa" style="text-transform:uppercase;"></div>
-        <div class="portal-list" id="portalList"></div>
       </div>
       <div class="portal-status" id="portalStatus" aria-live="polite"></div>
     </div>
@@ -2577,6 +2577,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
       portalAvaliacoesLista = rows || [];
       if(!lista) return;
       lista.style.display = "block";
+      lista.scrollIntoView({ behavior:"smooth", block:"nearest" });
       if(!rows || !rows.length){
         lista.innerHTML = '<div class="portal-empty">Nenhuma avaliacao salva ainda.</div>';
         setStatus("Nenhuma avaliacao salva ainda.", "");
