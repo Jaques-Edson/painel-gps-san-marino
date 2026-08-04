@@ -30,6 +30,14 @@ function requiredString(value: unknown, name: string) {
   return result;
 }
 
+function profileRole(role: unknown) {
+  return role === "manager" ? "manager" : "operator";
+}
+
+function publicRole(role: unknown) {
+  return role === "operator" ? "evaluator" : String(role || "evaluator");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
   if (req.method !== "POST") return json(req, { error: "Metodo nao permitido." }, 405);
@@ -66,7 +74,7 @@ Deno.serve(async (req) => {
           id: user.id,
           email: user.email || profile.email || "",
           full_name: profile.full_name || user.user_metadata?.full_name || "",
-          role: profile.role || user.user_metadata?.role || "evaluator",
+          role: publicRole(profile.role || user.user_metadata?.role),
           active: profile.active !== false && !user.banned_until,
           created_at: user.created_at,
           last_sign_in_at: user.last_sign_in_at,
@@ -79,7 +87,7 @@ Deno.serve(async (req) => {
       const fullName = requiredString(body.full_name, "o nome completo");
       const email = requiredString(body.email, "o e-mail").toLowerCase();
       const password = requiredString(body.password, "a senha");
-      const role = ["manager", "evaluator"].includes(body.role) ? body.role : "evaluator";
+      const role = profileRole(body.role);
       if (password.length < 8) return json(req, { error: "A senha deve ter pelo menos 8 caracteres." }, 400);
       const { data, error } = await admin.auth.admin.createUser({
         email,
@@ -117,7 +125,7 @@ Deno.serve(async (req) => {
 
     if (action === "setRole") {
       if (targetEmail === ADMIN_EMAIL) return json(req, { error: "O perfil do administrador principal nao pode ser alterado." }, 400);
-      const role = ["manager", "evaluator"].includes(body.role) ? body.role : "evaluator";
+      const role = profileRole(body.role);
       const { error: profileError } = await admin.from("profiles").update({ role }).eq("id", userId);
       if (profileError) throw profileError;
       const metadata = { ...(targetData.user.user_metadata || {}), role };
@@ -146,7 +154,11 @@ Deno.serve(async (req) => {
 
     return json(req, { error: "Operacao desconhecida." }, 400);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro interno.";
+    const message = error instanceof Error
+      ? error.message
+      : (error && typeof error === "object" && "message" in error)
+        ? String(error.message)
+        : "Erro interno.";
     return json(req, { error: message }, 500);
   }
 });
