@@ -102,6 +102,14 @@ body.light-view .gps-badge{background:linear-gradient(135deg,#e0f2fe,#fef3c7);bo
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;}
 .field{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.field-label-toggle{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.aav-toggle{
+  min-width:42px;height:20px;padding:0 7px;border:1px solid #22c55e;border-radius:999px;
+  background:rgba(34,197,94,.18);color:#86efac;font-size:8px;font-weight:950;
+  letter-spacing:.5px;cursor:pointer;transition:.15s;
+}
+.aav-toggle[aria-pressed="false"]{border-color:#ef4444;background:rgba(239,68,68,.17);color:#fca5a5;}
+.field.aav-disabled input[type="text"]{opacity:.48;filter:saturate(.35);}
 .loja-field{margin-bottom:8px;}
 .field label{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#7a9ab8;}
 input[type="text"],input[type="number"],input[type="date"],select{
@@ -1147,8 +1155,9 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
     <div class="blk">
       <div class="g2">
         <div class="field">
-          <label>AAV Avalia&ccedil;&atilde;o (R$)</label>
+          <div class="field-label-toggle"><label>AAV Avalia&ccedil;&atilde;o (R$)</label><button type="button" class="aav-toggle" data-toggle-input="usarVlrSugAAV" aria-pressed="true">LIGADO</button></div>
           <input id="vlrSugAAV" type="text" inputmode="numeric" placeholder="Ex: 85.500">
+          <input id="usarVlrSugAAV" type="hidden" value="1">
         </div>
         <div class="field atencao-preenchimento">
           <label>KM</label>
@@ -1162,12 +1171,14 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
     <div class="blk flex-blk">
       <div class="g2">
         <div class="field">
-          <label>AAV B2B Repasse (R$)</label>
+          <div class="field-label-toggle"><label>AAV B2B Repasse (R$)</label><button type="button" class="aav-toggle" data-toggle-input="usarAavRepasse" aria-pressed="true">LIGADO</button></div>
           <input id="aavRepasse" type="text" inputmode="numeric" placeholder="Ex: 89.000">
+          <input id="usarAavRepasse" type="hidden" value="1">
         </div>
         <div class="field">
-          <label>AAV B2C (R$)</label>
+          <div class="field-label-toggle"><label>AAV B2C (R$)</label><button type="button" class="aav-toggle" data-toggle-input="usarAavB2C" aria-pressed="true">LIGADO</button></div>
           <input id="aavB2C" type="text" inputmode="numeric" placeholder="Ex: 99.000">
+          <input id="usarAavB2C" type="hidden" value="1">
         </div>
       </div>
     </div>
@@ -1457,12 +1468,13 @@ const $=id=>document.getElementById(id);
 // Parâmetros oficiais Rev. 3 extraídos da planilha de referência (Rev. 2506).
 // Estes valores são internos da cozinha e não aparecem para o avaliador.
 const PARAMS = Object.freeze({
-  margemIdealShowroom: 0.06,
-  margemIdealRepasse: 0.025,
+  margemIdealShowroomBase: 0.075,
+  margemIdealRepasseBase: 0.02,
+  valorReferenciaMargem: 100000,
   kitRafaelPct: 0.05,
   taxaJurosAM: 0.015,
-  kitShowroomShare: 0.20,
-  kitRepasseShare: 0.16,
+  kitVariavelPct: 0.01,
+  kitFixoPct: 0.04,
   valorMinimo: 1000,
   valorMaximo: 999999,
   camposValorZeroOk: ["reparo"]
@@ -1595,23 +1607,30 @@ function calc(){
   // Atualiza a data fixa no painel direito
 
   // ── PARÂMETROS INTERNOS REV. 3 (idênticos ao Excel) ──────
-  const kitPct       = PARAMS.kitRafaelPct;       // D15 = 0.05
-  const taxaJurosAM  = PARAMS.taxaJurosAM;        // F15 = 0.015
-  const kitShowShare = PARAMS.kitShowroomShare;   // D16 = 0.20
-  const kitRepShare  = PARAMS.kitRepasseShare;    // F16 = D16*80% = 0.16
-  const metaShowPct  = PARAMS.margemIdealShowroom; // D17 = 0.06
-  const metaRepPct   = PARAMS.margemIdealRepasse;  // F17 = 0.025
+  const kitPct         = PARAMS.kitRafaelPct;
+  const taxaJurosAM    = PARAMS.taxaJurosAM;
+  const kitVariavelPct = PARAMS.kitVariavelPct;
+  const kitFixoPct     = PARAMS.kitFixoPct;
+  const usarVlrSugAAV = $("usarVlrSugAAV").value !== "0";
+  const usarAavRepasse = $("usarAavRepasse").value !== "0";
+  const usarAavB2C = $("usarAavB2C").value !== "0";
+  const modoGestor = String(window.portalPerfilPapel || "").toLowerCase() === "gestor";
+  const metaShowPct = smShowroom > 0 ? PARAMS.margemIdealShowroomBase * (PARAMS.valorReferenciaMargem / smShowroom) : 0;
+  const metaRepPct = smRepasse > 0 ? PARAMS.margemIdealRepasseBase * (PARAMS.valorReferenciaMargem / smRepasse) : 0;
 
   // ── MÉDIAS DE MERCADO ────────────────────────────────────
   // Excel E4: Média Showroom = média de SM Showroom, AutoAvaliar B2C e FIPE.
   // Excel E5: Média Repasse = média de AAV B2B Repasse e San Marino Repasse.
-  const valsShow = [smShowroom, aavB2C, fipe].filter(v => v > 0);
-  const valsRep  = [aavRepasse, smRepasse].filter(v => v > 0);
+  const valsShow = [smShowroom, usarAavB2C ? aavB2C : 0, fipe].filter(v => v > 0);
+  const valsRep  = [usarAavRepasse ? aavRepasse : 0, smRepasse].filter(v => v > 0);
+  const valsAvaliacao = [avaliacao, usarVlrSugAAV ? vlrSugAAV : 0].filter(v => v > 0);
 
-  const mediaShowroom = valsShow.length ? valsShow.reduce((a,b)=>a+b,0) / valsShow.length : 0;
-  const mediaRepasse  = valsRep.length  ? valsRep.reduce((a,b)=>a+b,0)  / valsRep.length  : 0;
-  const valsAvaliacao = [avaliacao, vlrSugAAV].filter(v => v > 0);
-  const mediaAvaliacao = valsAvaliacao.length ? valsAvaliacao.reduce((a,b)=>a+b,0) / valsAvaliacao.length : 0;
+  const mediaShowroomCalculada = valsShow.length ? valsShow.reduce((a,b)=>a+b,0) / valsShow.length : 0;
+  const mediaRepasseCalculada = valsRep.length ? valsRep.reduce((a,b)=>a+b,0) / valsRep.length : 0;
+  const mediaAvaliacaoCalculada = valsAvaliacao.length ? valsAvaliacao.reduce((a,b)=>a+b,0) / valsAvaliacao.length : 0;
+  const mediaShowroom = modoGestor && smShowroom > 0 ? smShowroom : mediaShowroomCalculada;
+  const mediaRepasse = modoGestor && smRepasse > 0 ? smRepasse : mediaRepasseCalculada;
+  const mediaAvaliacao = modoGestor && avaliacaoGestor > 0 ? avaliacaoGestor : mediaAvaliacaoCalculada;
 
   const temShowroomInputs = valsShow.length > 0;
   const temRepasseInputs  = valsRep.length > 0;
@@ -1680,13 +1699,14 @@ function calc(){
     return mediaShowroom
       - custoVeiculo
       - reparo
-      - (custoVeiculo * (kitPct * (1-kitShowShare)))
-      - (custoVeiculo * ((kitPct * kitShowShare) + taxaJurosAM) * (nDias/30));
+      - (custoVeiculo * kitFixoPct)
+      - (custoVeiculo * (kitVariavelPct + taxaJurosAM) * (nDias/30));
   }
   function margemRep(nDias){
     return mediaRepasse
       - custoVeiculo
-      - (custoVeiculo * ((kitPct * kitRepShare) + taxaJurosAM) * (nDias/30));
+      - (custoVeiculo * kitVariavelPct)
+      - (custoVeiculo * taxaJurosAM * (nDias/30));
   }
 
   const periodos = [0,15,30,45,60,75,90];
@@ -1726,12 +1746,12 @@ function calc(){
   }
 
   // ── DATAS LIMITE (idênticas ao Excel: C12, E12, C13, E13) ──
-  const dailyShow = ((custoVeiculo * taxaJurosAM) + (custoVeiculo * (kitPct * kitShowShare))) / 30;
-  const dailyRep  = ((custoVeiculo * taxaJurosAM) + (custoVeiculo * (kitPct * kitRepShare))) / 30;
+  const dailyShow = (custoVeiculo * (taxaJurosAM + kitVariavelPct)) / 30;
+  const dailyRep = (custoVeiculo * taxaJurosAM) / 30;
 
   if(temShowroomInputs){
-    const diasIdeal = (mediaShowroom - custoVeiculo - reparo - (custoVeiculo * (kitPct * (1-kitShowShare))) - (metaShowPct * mediaShowroom)) / dailyShow;
-    const diasZero  = (mediaShowroom - custoVeiculo - reparo - (custoVeiculo * (kitPct * (1-kitShowShare)))) / dailyShow;
+    const diasIdeal = (mediaShowroom - custoVeiculo - reparo - (custoVeiculo * kitFixoPct) - (metaShowPct * mediaShowroom)) / dailyShow;
+    const diasZero  = (mediaShowroom - custoVeiculo - reparo - (custoVeiculo * kitFixoPct)) / dailyShow;
     setText("ddlShowIdeal", deadlineTxt(diasIdeal,"ideal")); $("ddlShowIdeal").className="deadline-val "+classDeadline(diasIdeal,"ideal");
     setText("ddlShowZero", deadlineTxt(diasZero,"zero"));   $("ddlShowZero").className="deadline-val "+classDeadline(diasZero,"zero");
     setText("eddlShowIdeal", deadlineTxt(diasIdeal,"ideal"));
@@ -1742,8 +1762,8 @@ function calc(){
   }
 
   if(temRepasseInputs){
-    const diasIdeal = (mediaRepasse - custoVeiculo - (metaRepPct * mediaRepasse)) / dailyRep;
-    const diasZero  = (mediaRepasse - custoVeiculo) / dailyRep;
+    const diasIdeal = (mediaRepasse - custoVeiculo - (custoVeiculo * kitVariavelPct) - (metaRepPct * mediaRepasse)) / dailyRep;
+    const diasZero  = (mediaRepasse - custoVeiculo - (custoVeiculo * kitVariavelPct)) / dailyRep;
     setText("ddlRepIdeal", deadlineTxt(diasIdeal,"ideal")); $("ddlRepIdeal").className="deadline-val "+classDeadline(diasIdeal,"ideal");
     setText("ddlRepZero", deadlineTxt(diasZero,"zero"));   $("ddlRepZero").className="deadline-val "+classDeadline(diasZero,"zero");
     setText("eddlRepIdeal", deadlineTxt(diasIdeal,"ideal"));
@@ -2090,6 +2110,29 @@ function bindMoeda(id){
   });
 })();
 
+function sincronizarTogglesAAV(){
+  document.querySelectorAll(".aav-toggle").forEach(btn => {
+    const state = $(btn.dataset.toggleInput);
+    const ligado = !state || state.value !== "0";
+    btn.setAttribute("aria-pressed", String(ligado));
+    btn.textContent = ligado ? "LIGADO" : "DESLIGADO";
+    btn.closest(".field")?.classList.toggle("aav-disabled", !ligado);
+  });
+}
+(function bindTogglesAAV(){
+  document.querySelectorAll(".aav-toggle").forEach(btn => {
+    btn.addEventListener("click", function(){
+      const state = $(this.dataset.toggleInput);
+      if(!state) return;
+      state.value = state.value === "0" ? "1" : "0";
+      sincronizarTogglesAAV();
+      state.dispatchEvent(new Event("change", { bubbles:true }));
+      calc();
+    });
+  });
+  sincronizarTogglesAAV();
+})();
+
 // Placa: uppercase automático
 (function bindPlaca(){
   const el = $("placa"); if(!el) return;
@@ -2262,7 +2305,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
   const AVALIACAO_KEY = "gps-avaliacao-atual";
   const CAMPOS_PORTAL = [
     "loja","avaliadorNome","gestorNome","modelo","placa","modeloInteresse","modalidadeInteresse","avaliacao","avaliacaoGestor","reparo","vlrSugAAV","km",
-    "aavRepasse","aavB2C","fipe","smShowroom","smRepasse","dataAbertura","dataRecebimento",
+    "aavRepasse","aavB2C","usarVlrSugAAV","usarAavRepasse","usarAavB2C","fipe","smShowroom","smRepasse","dataAbertura","dataRecebimento",
     "kbbRepasse","mediaShowroom","mediaRepasse","kitRafael","taxaJuros"
   ];
   let portalSession = null;
@@ -2457,6 +2500,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
       window.aplicarPapelOperacional(dados.papelVisual);
     }
     observacoesPortal = Array.isArray(dados.observacoes) ? dados.observacoes : [];
+    sincronizarTogglesAAV();
     renderizarObservacoes();
     if(typeof calc === "function") calc();
   }
@@ -2773,6 +2817,27 @@ if($("dataAbertura") && !$("dataAbertura").value){
         return;
       }
       if(placaEl) placaEl.setCustomValidity("");
+      const papelAtual = String(portalPerfil && portalPerfil.papel || "").toLowerCase();
+      if(papelAtual === "avaliador"){
+        const obrigatorios = [
+          { id:"avaliadorNome", nome:"nome do avaliador" },
+          { id:"km", nome:"KM" }
+        ];
+        const ausente = obrigatorios.find(item => !String(byId(item.id)?.value || "").trim());
+        obrigatorios.forEach(item => {
+          const el = byId(item.id);
+          const vazio = !String(el?.value || "").trim();
+          el?.closest(".field")?.classList.toggle("has-error", vazio);
+          if(el) el.setCustomValidity(vazio ? "Campo obrigatorio" : "");
+        });
+        if(ausente){
+          const el = byId(ausente.id);
+          el?.reportValidity();
+          el?.focus();
+          setStatus("Para o avaliador, informe nome do avaliador, placa e KM antes de salvar.", "bad");
+          return;
+        }
+      }
       if(typeof calc === "function") calc();
       const dados = coletarDados();
       let codigo = avaliacaoAtual && avaliacaoAtual.codigo ? avaliacaoAtual.codigo : codigoDaUrl();
