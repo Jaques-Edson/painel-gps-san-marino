@@ -2535,6 +2535,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
       salvarSessaoLocal();
       await carregarPerfil();
       atualizarUi();
+      if(email === ADMIN_EMAIL) await carregarUsuariosAdmin();
       setStatus((portalPerfil && String(portalPerfil.papel || "").toLowerCase() === "avaliador") ? "Login de avaliador liberado. Preencha e salve a avaliacao." : "Login de gestor liberado. Painel completo disponivel.", "ok");
       if(codigoPendente) await carregarAvaliacao(codigoPendente);
     }catch(e){
@@ -2932,7 +2933,18 @@ if($("dataAbertura") && !$("dataAbertura").value){
       byId("adminNewName").value = ""; byId("adminNewEmail").value = ""; byId("adminNewPassword").value = "";
       await carregarUsuariosAdmin();
       setAdminStatus("Usuario criado e liberado sem envio de e-mail.", "ok");
-    }catch(e){ setAdminStatus(String(e.message || e), "bad"); }
+    }catch(e){
+      const message = String(e.message || e);
+      if(/already been registered|already registered|user already exists/i.test(message)){
+        await carregarUsuariosAdmin();
+        const select = byId("adminUserSelect");
+        const existing = Array.from(select?.options || []).find(option => String(option.dataset.email || "").toLowerCase() === email);
+        if(existing) select.value = existing.value;
+        setAdminStatus("Este e-mail ja esta cadastrado. O usuario foi localizado na lista.", "ok");
+      }else{
+        setAdminStatus(message, "bad");
+      }
+    }
     finally{ setBusy(btn, false); }
   }
   async function alterarSenhaAdmin(){
@@ -3012,6 +3024,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
       try{
         await carregarPerfil();
         atualizarUi();
+        if(String(portalSession.user && portalSession.user.email || "").toLowerCase() === ADMIN_EMAIL) await carregarUsuariosAdmin();
         if(codigoPendente) await carregarAvaliacao(codigoPendente);
         else setStatus("Conectado ao portal.", "ok");
       }catch(e){
