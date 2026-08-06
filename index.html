@@ -102,12 +102,12 @@ body.light-view .gps-badge{background:linear-gradient(135deg,#e0f2fe,#fef3c7);bo
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;}
 .field{display:flex;flex-direction:column;gap:3px;min-width:0;}
-.field-label-toggle{display:grid;grid-template-columns:minmax(0,1fr) 64px;align-items:start;gap:6px;min-height:28px;}
-.field-label-toggle label{line-height:1.25;}
+.field-label-toggle{display:grid;grid-template-columns:minmax(0,1fr) 50px;align-items:start;gap:4px;min-height:38px;}
+.field-label-toggle label{min-width:0;line-height:1.25;overflow-wrap:anywhere;}
 .aav-toggle{
-  width:64px;height:22px;padding:0 6px;border:1px solid #22c55e;border-radius:999px;
-  background:rgba(34,197,94,.18);color:#86efac;font-size:8px;font-weight:950;
-  letter-spacing:.35px;cursor:pointer;transition:.15s;justify-self:end;white-space:nowrap;
+  box-sizing:border-box;width:50px;max-width:100%;height:22px;padding:0 3px;border:1px solid #22c55e;border-radius:999px;
+  background:rgba(34,197,94,.18);color:#86efac;font-size:7px;font-weight:950;
+  letter-spacing:.15px;cursor:pointer;transition:.15s;justify-self:end;white-space:nowrap;overflow:hidden;text-align:center;
 }
 .aav-toggle[aria-pressed="false"]{border-color:#ef4444;background:rgba(239,68,68,.17);color:#fca5a5;}
 .field.aav-disabled input[type="text"]{opacity:.48;filter:saturate(.35);}
@@ -2113,7 +2113,9 @@ function sincronizarTogglesAAV(){
     const state = $(btn.dataset.toggleInput);
     const ligado = !state || state.value !== "0";
     btn.setAttribute("aria-pressed", String(ligado));
-    btn.textContent = ligado ? "LIGADO" : "DESLIGADO";
+    btn.textContent = ligado ? "LIGADO" : "DESL.";
+    btn.setAttribute("aria-label", ligado ? "Campo ligado; clique para desligar" : "Campo desligado; clique para ligar");
+    btn.title = ligado ? "Ligado — clique para desligar" : "Desligado — clique para ligar";
     btn.closest(".field")?.classList.toggle("aav-disabled", !ligado);
   });
 }
