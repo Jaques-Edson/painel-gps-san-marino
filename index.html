@@ -102,14 +102,16 @@ body.light-view .gps-badge{background:linear-gradient(135deg,#e0f2fe,#fef3c7);bo
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;}
 .field{display:flex;flex-direction:column;gap:3px;min-width:0;}
-.field-label-toggle{display:grid;grid-template-columns:minmax(0,1fr) 50px;align-items:start;gap:4px;min-height:38px;}
+.field-label-toggle{display:grid;grid-template-columns:minmax(0,1fr) 38px;align-items:start;gap:6px;min-height:38px;}
 .field-label-toggle label{min-width:0;line-height:1.25;overflow-wrap:anywhere;}
 .aav-toggle{
-  box-sizing:border-box;width:50px;max-width:100%;height:22px;padding:0 3px;border:1px solid #22c55e;border-radius:999px;
-  background:rgba(34,197,94,.18);color:#86efac;font-size:7px;font-weight:950;
-  letter-spacing:.15px;cursor:pointer;transition:.15s;justify-self:end;white-space:nowrap;overflow:hidden;text-align:center;
+  position:relative;box-sizing:border-box;width:38px;height:20px;padding:0;border:1px solid #22c55e;border-radius:999px;
+  background:#16a34a;cursor:pointer;transition:background .15s,border-color .15s;justify-self:end;font-size:0;color:transparent;
 }
-.aav-toggle[aria-pressed="false"]{border-color:#ef4444;background:rgba(239,68,68,.17);color:#fca5a5;}
+.aav-toggle::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.45);transform:translateX(18px);transition:transform .15s;}
+.aav-toggle[aria-pressed="false"]{border-color:#ef4444;background:#dc2626;}
+.aav-toggle[aria-pressed="false"]::after{transform:translateX(0);}
+.aav-toggle:focus-visible{outline:2px solid #7dd3fc;outline-offset:2px;}
 .field.aav-disabled input[type="text"]{opacity:.48;filter:saturate(.35);}
 .aav-grid{align-items:end;}
 .loja-field{margin-bottom:8px;}
@@ -2113,7 +2115,7 @@ function sincronizarTogglesAAV(){
     const state = $(btn.dataset.toggleInput);
     const ligado = !state || state.value !== "0";
     btn.setAttribute("aria-pressed", String(ligado));
-    btn.textContent = ligado ? "LIGADO" : "DESL.";
+    btn.textContent = "";
     btn.setAttribute("aria-label", ligado ? "Campo ligado; clique para desligar" : "Campo desligado; clique para ligar");
     btn.title = ligado ? "Ligado — clique para desligar" : "Desligado — clique para ligar";
     btn.closest(".field")?.classList.toggle("aav-disabled", !ligado);
