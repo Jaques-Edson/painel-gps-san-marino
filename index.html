@@ -102,14 +102,16 @@ body.light-view .gps-badge{background:linear-gradient(135deg,#e0f2fe,#fef3c7);bo
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;}
 .field{display:flex;flex-direction:column;gap:3px;min-width:0;}
-.field-label-toggle{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.field-label-toggle{display:grid;grid-template-columns:minmax(0,1fr) 64px;align-items:start;gap:6px;min-height:28px;}
+.field-label-toggle label{line-height:1.25;}
 .aav-toggle{
-  min-width:42px;height:20px;padding:0 7px;border:1px solid #22c55e;border-radius:999px;
+  width:64px;height:22px;padding:0 6px;border:1px solid #22c55e;border-radius:999px;
   background:rgba(34,197,94,.18);color:#86efac;font-size:8px;font-weight:950;
-  letter-spacing:.5px;cursor:pointer;transition:.15s;
+  letter-spacing:.35px;cursor:pointer;transition:.15s;justify-self:end;white-space:nowrap;
 }
 .aav-toggle[aria-pressed="false"]{border-color:#ef4444;background:rgba(239,68,68,.17);color:#fca5a5;}
 .field.aav-disabled input[type="text"]{opacity:.48;filter:saturate(.35);}
+.aav-grid{align-items:end;}
 .loja-field{margin-bottom:8px;}
 .field label{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#7a9ab8;}
 input[type="text"],input[type="number"],input[type="date"],select{
@@ -1153,7 +1155,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
 
     <!-- AAV AVALIADOR + KM -->
     <div class="blk">
-      <div class="g2">
+      <div class="g2 aav-grid">
         <div class="field">
           <div class="field-label-toggle"><label>AAV Avalia&ccedil;&atilde;o (R$)</label><button type="button" class="aav-toggle" data-toggle-input="usarVlrSugAAV" aria-pressed="true">LIGADO</button></div>
           <input id="vlrSugAAV" type="text" inputmode="numeric" placeholder="Ex: 85.500">
@@ -1169,7 +1171,7 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6f
 
     <!-- AAV B2B + AAV B2C PARA LANÇAMENTO DO AVALIADOR -->
     <div class="blk flex-blk">
-      <div class="g2">
+      <div class="g2 aav-grid">
         <div class="field">
           <div class="field-label-toggle"><label>AAV B2B Repasse (R$)</label><button type="button" class="aav-toggle" data-toggle-input="usarAavRepasse" aria-pressed="true">LIGADO</button></div>
           <input id="aavRepasse" type="text" inputmode="numeric" placeholder="Ex: 89.000">
@@ -1600,10 +1602,6 @@ function calc(){
   const aavRepasse = numVal("aavRepasse");
   const smRepasse  = numVal("smRepasse");
 
-  // Base do Excel: A5 = Avaliação Gestor SM.
-  // Reparo (B5) entra separado somente na margem/deadline Showroom.
-  const custoVeiculo = avaliacao;
-
   // Atualiza a data fixa no painel direito
 
   // ── PARÂMETROS INTERNOS REV. 3 (idênticos ao Excel) ──────
@@ -1614,7 +1612,6 @@ function calc(){
   const usarVlrSugAAV = $("usarVlrSugAAV").value !== "0";
   const usarAavRepasse = $("usarAavRepasse").value !== "0";
   const usarAavB2C = $("usarAavB2C").value !== "0";
-  const modoGestor = String(window.portalPerfilPapel || "").toLowerCase() === "gestor";
   const metaShowPct = smShowroom > 0 ? PARAMS.margemIdealShowroomBase * (PARAMS.valorReferenciaMargem / smShowroom) : 0;
   const metaRepPct = smRepasse > 0 ? PARAMS.margemIdealRepasseBase * (PARAMS.valorReferenciaMargem / smRepasse) : 0;
 
@@ -1625,12 +1622,13 @@ function calc(){
   const valsRep  = [usarAavRepasse ? aavRepasse : 0, smRepasse].filter(v => v > 0);
   const valsAvaliacao = [avaliacao, usarVlrSugAAV ? vlrSugAAV : 0].filter(v => v > 0);
 
-  const mediaShowroomCalculada = valsShow.length ? valsShow.reduce((a,b)=>a+b,0) / valsShow.length : 0;
-  const mediaRepasseCalculada = valsRep.length ? valsRep.reduce((a,b)=>a+b,0) / valsRep.length : 0;
-  const mediaAvaliacaoCalculada = valsAvaliacao.length ? valsAvaliacao.reduce((a,b)=>a+b,0) / valsAvaliacao.length : 0;
-  const mediaShowroom = modoGestor && smShowroom > 0 ? smShowroom : mediaShowroomCalculada;
-  const mediaRepasse = modoGestor && smRepasse > 0 ? smRepasse : mediaRepasseCalculada;
-  const mediaAvaliacao = modoGestor && avaliacaoGestor > 0 ? avaliacaoGestor : mediaAvaliacaoCalculada;
+  const mediaShowroom = valsShow.length ? valsShow.reduce((a,b)=>a+b,0) / valsShow.length : 0;
+  const mediaRepasse = valsRep.length ? valsRep.reduce((a,b)=>a+b,0) / valsRep.length : 0;
+  const mediaAvaliacao = valsAvaliacao.length ? valsAvaliacao.reduce((a,b)=>a+b,0) / valsAvaliacao.length : 0;
+
+  // A Média Avaliação (B6 no Excel) é a base de custo das projeções.
+  // Assim, o AAV Avaliação ligado participa das margens; desligado, sai delas.
+  const custoVeiculo = mediaAvaliacao || avaliacao;
 
   const temShowroomInputs = valsShow.length > 0;
   const temRepasseInputs  = valsRep.length > 0;
