@@ -1240,8 +1240,9 @@ body:not(.light-view):not(.patio-role) .sec-title{color:#9fc7f5;}
     <!-- FIPE PARA LANÇAMENTO DO AVALIADOR -->
     <div class="blk ciano-blk">
       <div class="field">
-        <label>FIPE (R$)</label>
+        <div class="field-label-toggle"><label>FIPE (R$)</label><button type="button" class="aav-toggle" data-toggle-input="usarFipe" aria-pressed="true"></button></div>
         <input id="fipe" type="text" inputmode="numeric" placeholder="Ex: 100.000">
+        <input id="usarFipe" type="hidden" value="1">
       </div>
     </div>
 
@@ -1664,13 +1665,14 @@ function calc(){
   const usarVlrSugAAV = $("usarVlrSugAAV").value !== "0";
   const usarAavRepasse = $("usarAavRepasse").value !== "0";
   const usarAavB2C = $("usarAavB2C").value !== "0";
+  const usarFipe = $("usarFipe").value !== "0";
   const metaShowPct = smShowroom > 0 ? PARAMS.margemIdealShowroomBase * (PARAMS.valorReferenciaMargem / smShowroom) : 0;
   const metaRepPct = smRepasse > 0 ? PARAMS.margemIdealRepasseBase * (PARAMS.valorReferenciaMargem / smRepasse) : 0;
 
   // ── MÉDIAS DE MERCADO ────────────────────────────────────
   // Excel E4: Média Showroom = média de SM Showroom, AutoAvaliar B2C e FIPE.
   // Excel E5: Média Repasse = média de AAV B2B Repasse e San Marino Repasse.
-  const valsShow = [smShowroom, usarAavB2C ? aavB2C : 0, fipe].filter(v => v > 0);
+  const valsShow = [smShowroom, usarAavB2C ? aavB2C : 0, usarFipe ? fipe : 0].filter(v => v > 0);
   const valsRep  = [usarAavRepasse ? aavRepasse : 0, smRepasse].filter(v => v > 0);
   const valsAvaliacao = [avaliacao, usarVlrSugAAV ? vlrSugAAV : 0].filter(v => v > 0);
 
@@ -2357,7 +2359,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
   const AVALIACAO_KEY = "gps-avaliacao-atual";
   const CAMPOS_PORTAL = [
     "loja","avaliadorNome","gestorNome","modelo","placa","modeloInteresse","modalidadeInteresse","avaliacao","avaliacaoGestor","reparo","vlrSugAAV","km",
-    "aavRepasse","aavB2C","usarVlrSugAAV","usarAavRepasse","usarAavB2C","fipe","smShowroom","smRepasse","dataAbertura","dataRecebimento",
+    "aavRepasse","aavB2C","usarVlrSugAAV","usarAavRepasse","usarAavB2C","fipe","usarFipe","smShowroom","smRepasse","dataAbertura","dataRecebimento",
     "kbbRepasse","mediaShowroom","mediaRepasse","kitRafael","taxaJuros"
   ];
   let portalSession = null;
