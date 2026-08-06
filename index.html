@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<meta name="theme-color" content="#04101e"/>
+<meta name="theme-color" content="#0b3a8c"/>
 <title>GPS — Guia de Precificação Seminovos</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1010,6 +1010,56 @@ body.patio-role .avaliador-save-panel .portal-btn.subtle{background:#fffdf7;bord
 body.patio-role .avaliador-save-panel .portal-btn.subtle:hover{background:#eaf6fb;color:#062033;}
 .avaliador-save-panel .portal-status{margin-top:7px;min-height:16px;font-size:10px;}
 
+
+
+/* TEMA AZUL ROYAL */
+html{background:#0a2a66;}
+body:not(.light-view):not(.patio-role){
+  background:
+    radial-gradient(circle at 88% 8%,rgba(72,134,255,.38),transparent 34%),
+    radial-gradient(circle at 12% 92%,rgba(20,86,190,.30),transparent 38%),
+    linear-gradient(135deg,#08275f 0%,#0d3f91 48%,#1658bb 100%);
+}
+body:not(.light-view):not(.patio-role) .topbar{
+  background:linear-gradient(90deg,rgba(4,25,69,.98),rgba(8,54,132,.96));
+  border-bottom-color:rgba(147,197,253,.28);
+  box-shadow:0 4px 18px rgba(1,12,38,.24);
+}
+body:not(.light-view):not(.patio-role) .left{
+  background:linear-gradient(180deg,rgba(5,31,79,.90),rgba(4,24,62,.86));
+  border-right-color:rgba(147,197,253,.25);
+  backdrop-filter:blur(8px);
+}
+body:not(.light-view):not(.patio-role) .right{
+  background:linear-gradient(135deg,rgba(15,64,145,.30),rgba(31,91,190,.18));
+}
+body:not(.light-view):not(.patio-role) .blk,
+body:not(.light-view):not(.patio-role) .card,
+body:not(.light-view):not(.patio-role) .deadline-blk,
+body:not(.light-view):not(.patio-role) .data-row,
+body:not(.light-view):not(.patio-role) .status,
+body:not(.light-view):not(.patio-role) .nota,
+body:not(.light-view):not(.patio-role) .excel-resumo{
+  background-color:rgba(4,28,72,.72);
+  border-color:rgba(147,197,253,.22);
+  box-shadow:0 6px 18px rgba(1,15,48,.14);
+}
+body:not(.light-view):not(.patio-role) input[type="text"],
+body:not(.light-view):not(.patio-role) input[type="number"],
+body:not(.light-view):not(.patio-role) input[type="date"],
+body:not(.light-view):not(.patio-role) select{
+  background:rgba(2,18,50,.88);
+  border-color:rgba(147,197,253,.25);
+}
+body:not(.light-view):not(.patio-role) .cmp{
+  background:rgba(4,28,72,.66);
+  border:1px solid rgba(147,197,253,.18);
+}
+body:not(.light-view):not(.patio-role) .cmp th{background:rgba(17,67,145,.58);}
+body:not(.light-view):not(.patio-role) .cmp td{border-bottom-color:rgba(147,197,253,.13);}
+body:not(.light-view):not(.patio-role) .field label,
+body:not(.light-view):not(.patio-role) .topbar-sub,
+body:not(.light-view):not(.patio-role) .sec-title{color:#9fc7f5;}
 </style>
 </head>
 <body class="auth-locked">
