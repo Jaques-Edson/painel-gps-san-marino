@@ -2670,9 +2670,17 @@ if($("dataAbertura") && !$("dataAbertura").value){
     try{
       const placaBusca = ((byId("portalBuscaPlaca") && byId("portalBuscaPlaca").value) || "").toUpperCase().replace(/[^A-Z0-9]/g,"");
       const filtro = placaBusca ? "placa=ilike.*" + encodeURIComponent(placaBusca) + "*&" : "";
-      const rows = await request("/rest/v1/avaliacoes?" + filtro + "select=id,codigo,placa,modelo,dados,criado_por_email,atualizado_em,criado_em&order=atualizado_em.desc&limit=200", {
-        headers: authHeaders()
-      });
+      const rows = [];
+      const tamanhoPagina = 500;
+      let deslocamento = 0;
+      while(true){
+        const pagina = await request("/rest/v1/avaliacoes?" + filtro + "select=id,codigo,placa,modelo,dados,criado_por_email,atualizado_em,criado_em&order=atualizado_em.desc&limit=" + tamanhoPagina + "&offset=" + deslocamento, {
+          headers: authHeaders()
+        });
+        if(Array.isArray(pagina)) rows.push(...pagina);
+        if(!Array.isArray(pagina) || pagina.length < tamanhoPagina) break;
+        deslocamento += tamanhoPagina;
+      }
       portalAvaliacoesLista = rows || [];
       if(!lista) return;
       lista.style.display = "block";
@@ -2900,6 +2908,13 @@ if($("dataAbertura") && !$("dataAbertura").value){
       const modelo = (($("modelo") && $("modelo").value) || "").trim();
       let row = avaliacaoAtual;
       if(!row && codigo) row = await buscarAvaliacao(codigo);
+      const normalizarPlaca = valor => String(valor || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+      const placaRegistro = row ? normalizarPlaca(row.placa || (row.dados && row.dados.placa)) : "";
+      const novaPorTrocaDePlaca = !!(row && row.id && placaRegistro && placaRegistro !== normalizarPlaca(placa));
+      if(novaPorTrocaDePlaca){
+        row = null;
+        codigo = criarCodigo();
+      }
       const payload = {
         codigo: codigo,
         placa: placa,
@@ -2924,7 +2939,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
         });
         avaliacaoAtual = inserted && inserted[0] ? inserted[0] : payload;
       }
-      if(!auto && avaliacaoAtual && avaliacaoAtual.id){
+      if(avaliacaoAtual && avaliacaoAtual.id){
         await request("/rest/v1/avaliacoes_historico", {
           method:"POST",
           headers: authHeaders({ "Prefer":"return=minimal" }),
@@ -2944,7 +2959,7 @@ if($("dataAbertura") && !$("dataAbertura").value){
         const hora = new Date().toLocaleTimeString("pt-BR", { hour:"2-digit", minute:"2-digit" });
         setStatus("Alteracoes salvas automaticamente as " + hora + ".", "ok");
       }else{
-        setStatus("Salvo online. Link pronto para enviar.", "ok");
+        setStatus(novaPorTrocaDePlaca ? "Nova placa detectada: nova avaliacao criada e salva online." : "Salvo online. Link pronto para enviar.", "ok");
       }
       const lista = byId("portalList");
       if(!auto && lista && lista.style.display === "block") listarAvaliacoes();
@@ -2980,7 +2995,8 @@ if($("dataAbertura") && !$("dataAbertura").value){
   function restaurarAvaliacaoLocal(){
     try{
       const raw = localStorage.getItem(AVALIACAO_KEY);
-      if(raw) avaliacaoAtual = JSON.parse(raw);
+      const referencia = raw ? JSON.parse(raw) : null;
+      if(!codigoPendente && referencia && referencia.codigo) codigoPendente = referencia.codigo;
     }catch(e){}
   }
   function setAdminStatus(msg, tipo){
